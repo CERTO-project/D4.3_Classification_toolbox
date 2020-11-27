@@ -6,6 +6,8 @@ This will become a python module for the fuzzy clustering of optical spectra.
 
 * __Easy to use__: _Scikit-learn syntax_
 
+Enables integration into [scikit-learn pipelines](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html). Useful for grid searching for the optimal parameters and joining up pre and post processing steps.
+
 ```
 import WaterClassifier
 wc = WaterClassifier(method='cmeans')
