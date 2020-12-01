@@ -36,3 +36,4 @@ wc.model
 4) generate a best effort class set for different sensors
 4) 
 
+overview google doc: https://docs.google.com/spreadsheets/d/1uoGp7u3A-hUjuZtvD6z0T5eiK2pyHwqqYJemsZEgY-g/edit?ts=5fc0d0df#gid=0
