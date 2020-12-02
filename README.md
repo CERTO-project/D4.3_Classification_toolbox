@@ -30,10 +30,13 @@ wc.model
 
 ## Plan of action
 
-1) build a framework for clusting data and scoring the cluster set
-2) use framework to test out different clustering algorithms with different hyper parameters
-3) find the best hyper parameters to use as default
-4) generate a best effort class set for different sensors
-4) 
+1. build a framework for clusting data and scoring the cluster set
+2. use framework to test out different clustering algorithms with different hyper parameters
+3. find the best hyper parameters to use as default
+4. generate a best effort class set for different sensors
+
+## What we promised
+
+![](2020_CERTO_WP4_updated_Gannt.jpg)
 
 overview google doc: https://docs.google.com/spreadsheets/d/1uoGp7u3A-hUjuZtvD6z0T5eiK2pyHwqqYJemsZEgY-g/edit?ts=5fc0d0df#gid=0
