@@ -120,11 +120,16 @@ class CmeansModel(BaseEstimator, ClusterMixin):
                 X.T, self.c, self.m, error=self.err, maxiter=self.maxiter, seed=self.random_state
             )
 
-            self.cntr_ = cntr
-            self.u_ = u
-            self.labels_ = np.argmax(u,axis=0)
-            self.u0_ = u0
-            self.d_ = d
+            # for consistency
+            # order clusters by 1st feature
+            # cntr size (S,C)
+            order = np.argsort(cntr[:, 0])
+
+            self.cntr_ = cntr[order, :]
+            self.u_ = u[order, :]
+            self.labels_ = np.argmax(self.u_, axis=0)
+            self.u0_ = u0[order, :]
+            self.d_ = d[order, :]
             self.jm_ = jm
             self.p_ = p
             self.fpc_ = fpc
