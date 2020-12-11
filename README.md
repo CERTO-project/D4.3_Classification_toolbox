@@ -17,16 +17,16 @@ wc = WaterClassifier(method='cmeans')
 wc.fit(X, **kwargs)
 
 # classify a set of data
-Y = wc.transform(X)
+Y = wc.predict(X)
 
-# access model
-wc.model
->> model.instance....
+# access attributes, eg. cluster centers
+wc.cntr_
+
 ```
 
 * __Self consistent repo__: _conda environment `.yml` file_
 
-* __Flexible__:_method kwarg `method='cmeans'`_
+* __Flexible__:_can swap out estimators for different methods_
 
 ## Plan of action
 
