@@ -4,35 +4,77 @@ spectral library generation
 
 import os
 import xarray as xr
-from blob import glob
+from glob import glob
 import argparse
 
-def sample_file(file, step):
-    """Take single netcdf and return regularly sampled pixels in a 2D array of dimension [wavelengths, pixels]"""
+def sample_file(
+    file,
+    step_size=100,
+    variables=lambda x : "Rrs" in x,
+    masks=None,
+    sensor=None,
+    time_bounds=None,
+    max_pixels=None,
+):
+    """Given a filename, 
+    return a 2D array with dimensions (bands, pixels)
+    
+    Used for generating training data for water spectra
+    analysis models
+    
+    Arguments:
+    
+     - files : a list of files to sample from. Choose carefully
+     - list or function to filter the file's data_vars
+     - step_size : data indexed in lat and lon as [::step_size]
+     - mask : for excluding regions. Must match grid
+     - sensor : if file list is mixed, choose sensor (required?)
+     - time_bounds : (tmin, tmax) or pandas datetime index (required?)
+     - max_pixels : limit on the number of pixels returned
 
+    Returns:
+     - xarray.DataArray with dimensions (bands, pixels) and a size
+     that is determined by the number of files and step_size or limited
+     to max_pixels if defined.
+     
+    """
+    
     ds = xr.open_dataset(file)
-    ds = ds[[y for y in ds.data_vars if "Rrs" in y]].isel(
-        latitude=slice(0,-1,step),
-        longitude=slice(0,-1,step)
+
+    # if the variables aren't a list, try filtering
+    if type(variables) != list:
+        variables = list(
+            filter(
+                variables,
+                ds.data_vars
+            )
+        )
+
+    # crop down to the variables and subset data
+    ds = ds[variables].isel(
+        latitude=slice(0,-1,step_size),
+        longitude=slice(0,-1,step_size)
     )
-    ds = ds.rename({v:int(v[-3:]) for v in ds.data_vars})
-    ds = ds[[x for x in sorted(ds.data_vars)]]
-    arr = ds.to_array(dim='wavelength')
+
+    # try to sort by wavelength
+    try:
+        ds = ds.rename({v:int(v[-3:]) for v in ds.data_vars})
+        ds = ds[[x for x in sorted(ds.data_vars)]]
+        dname='wavelength'
+
+    # if cannot convert to ints and order, then raise warning
+    except:
+        dname='variables'
+
+    arr = ds.to_array(dim=dname)
 
     pixels = xr.DataArray(
         arr.data.reshape((11,-1)),
-        dims=['wavelength','pixel'],
-        coords={'wavelength':wavelengths}
+        dims=[dname,'pixel'],
+        coords={dname:arr.coords[dname]}
     )
 
-    # put negative values to zero?
+    # drop null values (they're just bits of the mask)
     pixels = pixels.dropna(dim='pixel',how='any')
 
     return pixels.T.compute()
-
-def main():
-
-
-
-if __name__ == '__main__':
-    main()
