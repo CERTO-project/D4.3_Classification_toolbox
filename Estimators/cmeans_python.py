@@ -42,6 +42,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         random_state=None,
         random_starts=1,
         scoring_metric='fpc'
+        distance_metric='euclidean'
     )
 
     # determine clusters
@@ -91,7 +92,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             self,
             c=5, m=2, err=0.005, maxiter=1000,
             random_state=None,
-            scoring_metric='fpc'
+            scoring_metric='fpc',
+            distance_metric='euclidean'
         ):
         super(CmeansModel, self).__init__()
         self.c = c
@@ -100,6 +102,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         self.maxiter = maxiter
         self.random_state = check_random_state(random_state)
         self.scoring_metric = scoring_metric
+        self.distance_metric = distance_metric
 
     def get_params(self, deep=False):
         # required for scikit-learn interoperability
@@ -107,7 +110,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             'c':self.c,
             'm':self.m,
             'err':self.err,
-            'maxiter':self.maxiter
+            'maxiter':self.maxiter,
+            'distance_metric':self.distance_metric
         }
 
     def set_params(self, **parameters):
@@ -123,7 +127,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         try:
             cntr, u, u0, d, jm, p, fpc = cmeans(
-                X.T, self.c, self.m, error=self.err, maxiter=self.maxiter, seed=self.random_state.randint(1000)
+                X.T, self.c, self.m, error=self.err, maxiter=self.maxiter,
+                metric=self.distance_metric, seed=self.random_state.randint(1000)
             )
 
             # for consistency
@@ -161,7 +166,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             X.T, cntr_trained=self.cntr_,
             m=self.m,
             error=self.err,
-            maxiter=self.maxiter
+            maxiter=self.maxiter,
+            metric=self.distance_metric
         )[0]
 
 
