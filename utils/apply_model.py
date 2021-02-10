@@ -3,13 +3,13 @@ This file contains functions to apply trained models to new data and package the
 
 Author : Angus Laurenson, Plymouth Marine Laboratory
 Email : anla@pml.ac.uk
+"""
 
 
 import xarray as xr
 import dask.array as da
 import sys
-sys.path.append("./Estimators/")
-sys.path.append("./utils/")
+sys.path.append("../Estimators/")
 import serialize_models
 
 

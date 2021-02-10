@@ -37,6 +37,6 @@ wc.cntr_
 
 ## What we promised
 
-![](2020_CERTO_WP4_updated_Gannt.jpg)
+![](docs/2020_CERTO_WP4_updated_Gannt.jpg)
 
 overview google doc: https://docs.google.com/spreadsheets/d/1uoGp7u3A-hUjuZtvD6z0T5eiK2pyHwqqYJemsZEgY-g/edit?ts=5fc0d0df#gid=0
