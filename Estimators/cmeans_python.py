@@ -152,7 +152,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
             # calculate covariance from training data
             self.cov_ = np.stack(
-                [np.cov(X.T, aweights=x) for x in cmeans.u_]
+                [np.cov(X.T, aweights=x) for x in self.u_]
             )
 
         except TypeError:
@@ -184,7 +184,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         if method == 'chi2':
             """predict membership from covariance and mean of class"""
 
-            n_features = means.shape[0]
+            n_features = self.cntr_.shape[0]
 
             dist = cdist(
                 X,
