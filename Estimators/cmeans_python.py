@@ -26,6 +26,10 @@ from sklearn.metrics import silhouette_score
 # scikit-learn base classes
 from sklearn.base import BaseEstimator, ClusterMixin
 
+# distances
+from scipy.spatial.distance import cdist
+from scipy.stats import chi2
+
 class CmeansModel(BaseEstimator, ClusterMixin):
     """A c-means clustering estimator that is compatible with scikit-learn.
 
@@ -146,6 +150,11 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             self.fpc_ = fpc
             self.silouette_score_ = silhouette_score(X, self.labels_)
 
+            # calculate covariance from training data
+            self.cov_ = np.stack(
+                [np.cov(X.T, aweights=x) for x in cmeans.u_]
+            )
+
         except TypeError:
             raise TypeError("argument must be a string.* number")
 
@@ -153,7 +162,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         return self
 
-    def predict(self, X, y=None):
+    def predict(self, X, y=None, method='default'):
         ''''\n    Prediction of new data in given a trained fuzzy c-means framework [1].\n\n    Parameters\n    ----------\n    test_data : 2d array, size (S, N)\n        New, independent data set to be predicted based on trained c-means\n        from ``cmeans``. N is the number of data sets; S is the number of\n        features within each sample vector.\n    cntr_trained : 2d array, size (S, c)\n        Location of trained centers from prior training c-means.\n    m : float\n        Array exponentiation applied to the membership function u_old at each\n        iteration, where U_new = u_old ** m.\n    error : float\n        Stopping criterion; stop early if the norm of (u[p] - u[p-1]) < error.\n    maxiter : int\n        Maximum number of iterations allowed.\n    metric: string\n        By default is set to euclidean. Passes any option accepted by\n        ``scipy.spatial.distance.cdist``.\n    init : 2d array, size (S, N)\n        Initial fuzzy c-partitioned matrix. If none provided, algorithm is\n        randomly initialized.\n    seed : int\n        If provided, sets random seed of init. No effect if init is\n        provided. Mainly for debug/testing purposes.\n\n    Returns\n    -------\n    u : 2d array, (S, N)\n        Final fuzzy c-partitioned matrix.\n    u0 : 2d array, (S, N)\n        Initial guess at fuzzy c-partitioned matrix (either provided init or\n        random guess used if init was not provided).\n    d : 2d array, (S, N)\n        Final Euclidian distance matrix.\n    jm : 1d array, length P\n        Objective function history.\n    p : int\n        Number of iterations run.\n    fpc : float\n        Final fuzzy partition coefficient.\n\n    Notes\n    -----\n    Ross et al. [1]_ did not include a prediction algorithm to go along with\n    fuzzy c-means. This prediction algorithm works by repeating the clustering\n    with fixed centers, then efficiently finds the fuzzy membership at all\n    points.\n\n    References\n    ----------\n    .. [1] Ross, Timothy J. Fuzzy Logic With Engineering Applications, 3rd ed.\n           Wiley. 2010. ISBN 978-0-470-74376-8 pp 352-353, eq 10.28 - 10.35.\n    '''
 
         # check if is check_is_fitted
@@ -162,14 +171,25 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         # check input is OK
         X = check_array(X)
 
-        return cmeans_predict(
-            X.T, cntr_trained=self.cntr_,
-            m=self.m,
-            error=self.err,
-            maxiter=self.maxiter,
-            metric=self.distance_metric
-        )[0]
+        if method == 'default':
 
+            return cmeans_predict(
+                X.T, cntr_trained=self.cntr_,
+                m=self.m,
+                error=self.err,
+                maxiter=self.maxiter,
+                metric=self.distance_metric
+            )[0]
+
+        # if method == 'chi2':
+        #
+        #     return 1 - chi2(
+        #         cdist(
+        #             X,
+        #             self.cntr_,
+        #             self.cov_
+        #         )
+        #     )
 
     def fit_predict(self, X, y=None):
         return self.fit(X).predict(X)
