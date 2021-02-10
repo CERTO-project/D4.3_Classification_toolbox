@@ -181,15 +181,21 @@ class CmeansModel(BaseEstimator, ClusterMixin):
                 metric=self.distance_metric
             )[0]
 
-        # if method == 'chi2':
-        #
-        #     return 1 - chi2(
-        #         cdist(
-        #             X,
-        #             self.cntr_,
-        #             self.cov_
-        #         )
-        #     )
+        if method == 'chi2':
+            """predict membership from covariance and mean of class"""
+
+            n_features = means.shape[0]
+
+            dist = cdist(
+                X,
+                np.atleast_2d(self.cntr_),
+                metric=self.distance_metric,
+                VI=np.linalg.inv(self.cov_)
+            )
+
+            memberships = 1 - chi2.cdf(dist, n_features)
+
+            return memberships.T
 
     def fit_predict(self, X, y=None):
         return self.fit(X).predict(X)
