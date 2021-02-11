@@ -5,15 +5,22 @@ Author : Angus Laurenson, Plymouth Marine Laboratory
 Email : anla@pml.ac.uk
 """
 
-
+import numpy as np
 import xarray as xr
 import dask.array as da
 import sys
 sys.path.append("../Estimators/")
 import serialize_models
 
+def choose_power(L):
+    d = 1
+    n=1
+    while L % d == 0:
+        n += 1
+        d = 2**n
+    return 2**(n-1)
 
-def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7)):
+def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), **predict_kwargs):
     """Given a netcdf file name or xr.Dataset and a fitted model.
     Return an xr.Dataset that contains
     the classified data and model parameters.
@@ -98,7 +105,7 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7))
 
 
     mem = data.map_blocks(
-        pl.predict,
+        lambda x : model.predict(x, **predict_kwargs),
         chunks=(data.chunks[0],C),
         dtype=float,
     ).compute()
