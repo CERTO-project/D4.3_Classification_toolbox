@@ -8,9 +8,7 @@ Email : anla@pml.ac.uk
 import numpy as np
 import xarray as xr
 import dask.array as da
-import sys
-sys.path.append("../Estimators/")
-import serialize_models
+from .serialize_models import pipeline_to_xarray
 
 def choose_power(L):
     d = 1
