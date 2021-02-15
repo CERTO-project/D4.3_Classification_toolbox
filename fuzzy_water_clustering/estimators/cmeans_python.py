@@ -205,8 +205,5 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         if self.scoring_metric == 'fpc':
             return self.fpc_
 
-        if self.scoring_metric == 'silouette':
-            return self.silouette_score_
-
         else:
             raise ValueError("Missing scoring metric")
