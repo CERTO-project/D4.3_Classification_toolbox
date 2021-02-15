@@ -3,35 +3,38 @@
 A scikit-learn compatible cmeans clustering estimator object.
 Built on skfuzzy.cluster.cmeans and cmeans_predict functions.
 
-`from CmeansPython import CmeansModel`
+`from cmeans_python import CmeansModel`
 
 See class docstring for more info.
-
 
 Author : Angus Laurenson
 Email  : anla@pml.ac.uk
 '''
 
-# for clustering
+# cmeans algorithms
 from skfuzzy.cluster import cmeans, cmeans_predict
 
 # for data handling
-import xarray as xr
-import pandas as pd
 import numpy as np
 
 # scikit-learn checks
-from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
-from sklearn.metrics import silhouette_samples, silhouette_score
+from sklearn.utils.validation import check_array, check_is_fitted, check_random_state
+
+# scikit-learn scoring metric REMOVE?
+from sklearn.metrics import silhouette_score
 
 # scikit-learn base classes
 from sklearn.base import BaseEstimator, ClusterMixin
 
+# distances
+from scipy.spatial.distance import cdist
+from scipy.stats import chi2
+
 class CmeansModel(BaseEstimator, ClusterMixin):
-    """A scikit-learn API compatible c-means clustering estimator object.
+    """A c-means clustering estimator that is compatible with scikit-learn.
+
     Built on skfuzzy.cluster.cmeans and cmeans_predict functions.
-    fit() and transform() methods have original docstrings
+    fit() and predict() methods have original docstrings
 
     # USAGE #
 
@@ -43,13 +46,14 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         random_state=None,
         random_starts=1,
         scoring_metric='fpc'
+        distance_metric='euclidean'
     )
 
     # determine clusters
     cmeans.fit(X)
 
     # estimate memberships
-    lables = cmeans.transform(X)
+    lables = cmeans.predict(X)
 
     # score clustering
     score = cmeans.score()
@@ -66,8 +70,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
     # METHODS #
 
     fit(X)
-    transform(X)
-    fit_transform(X)
+    predict(X)
+    fit_predict(X)
     score()
 
     where X is an array of size (N,M),
@@ -88,19 +92,31 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
     """
 
-    def __init__(self, c=5, m=2, err=0.005, maxiter=1000,  random_state=None, random_starts=1, scoring_metric='fpc'):
+    def __init__(
+            self,
+            c=5, m=2, err=0.005, maxiter=1000,
+            random_state=None,
+            scoring_metric='fpc',
+            distance_metric='euclidean'
+        ):
         super(CmeansModel, self).__init__()
         self.c = c
         self.m = m
         self.err = err
         self.maxiter = maxiter
-        self.random_state = random_state
-        self.random_starts = int(random_starts)
+        self.random_state = check_random_state(random_state)
         self.scoring_metric = scoring_metric
+        self.distance_metric = distance_metric
 
     def get_params(self, deep=False):
         # required for scikit-learn interoperability
-        return {'c':self.c,'m':self.m,'err':self.err,'maxiter':self.maxiter}
+        return {
+            'c':self.c,
+            'm':self.m,
+            'err':self.err,
+            'maxiter':self.maxiter,
+            'distance_metric':self.distance_metric
+        }
 
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
@@ -115,18 +131,29 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         try:
             cntr, u, u0, d, jm, p, fpc = cmeans(
-                X.T, self.c, self.m, error=self.err, maxiter=self.maxiter, seed=self.random_state
+                X.T, self.c, self.m, error=self.err, maxiter=self.maxiter,
+                metric=self.distance_metric, seed=self.random_state.randint(1000)
             )
 
-            self.cntr_ = cntr
-            self.u_ = u
-            self.labels_ = np.argmax(u,axis=0)
-            self.u0_ = u0
-            self.d_ = d
+            # for consistency
+            # order clusters by 1st feature
+            # cntr size (S,C)
+            order = np.argsort(cntr[:, 0].ravel())
+
+            self.cntr_ = cntr[order, :]
+            self.u_ = u[order, :]
+            self.labels_ = np.argmax(self.u_, axis=0)
+            self.u0_ = u0[order, :]
+            self.d_ = d[order, :]
             self.jm_ = jm
             self.p_ = p
             self.fpc_ = fpc
             self.silouette_score_ = silhouette_score(X, self.labels_)
+
+            # calculate covariance from training data
+            self.cov_ = np.stack(
+                [np.cov(X.T, aweights=x) for x in self.u_]
+            )
 
         except TypeError:
             raise TypeError("argument must be a string.* number")
@@ -135,23 +162,48 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         return self
 
-    def transform(self, X, y=None):
+    def predict(self, X, y=None, method='default'):
         ''''\n    Prediction of new data in given a trained fuzzy c-means framework [1].\n\n    Parameters\n    ----------\n    test_data : 2d array, size (S, N)\n        New, independent data set to be predicted based on trained c-means\n        from ``cmeans``. N is the number of data sets; S is the number of\n        features within each sample vector.\n    cntr_trained : 2d array, size (S, c)\n        Location of trained centers from prior training c-means.\n    m : float\n        Array exponentiation applied to the membership function u_old at each\n        iteration, where U_new = u_old ** m.\n    error : float\n        Stopping criterion; stop early if the norm of (u[p] - u[p-1]) < error.\n    maxiter : int\n        Maximum number of iterations allowed.\n    metric: string\n        By default is set to euclidean. Passes any option accepted by\n        ``scipy.spatial.distance.cdist``.\n    init : 2d array, size (S, N)\n        Initial fuzzy c-partitioned matrix. If none provided, algorithm is\n        randomly initialized.\n    seed : int\n        If provided, sets random seed of init. No effect if init is\n        provided. Mainly for debug/testing purposes.\n\n    Returns\n    -------\n    u : 2d array, (S, N)\n        Final fuzzy c-partitioned matrix.\n    u0 : 2d array, (S, N)\n        Initial guess at fuzzy c-partitioned matrix (either provided init or\n        random guess used if init was not provided).\n    d : 2d array, (S, N)\n        Final Euclidian distance matrix.\n    jm : 1d array, length P\n        Objective function history.\n    p : int\n        Number of iterations run.\n    fpc : float\n        Final fuzzy partition coefficient.\n\n    Notes\n    -----\n    Ross et al. [1]_ did not include a prediction algorithm to go along with\n    fuzzy c-means. This prediction algorithm works by repeating the clustering\n    with fixed centers, then efficiently finds the fuzzy membership at all\n    points.\n\n    References\n    ----------\n    .. [1] Ross, Timothy J. Fuzzy Logic With Engineering Applications, 3rd ed.\n           Wiley. 2010. ISBN 978-0-470-74376-8 pp 352-353, eq 10.28 - 10.35.\n    '''
 
+        # check if is check_is_fitted
+        check_is_fitted(self, "cntr_")
+
+        # check input is OK
         X = check_array(X)
-        return cmeans_predict(X.T, cntr_trained=self.cntr_, m=self.m, error=self.err, maxiter=self.maxiter)[0]
 
+        if method == 'default':
 
-    def fit_transform(self, X, y=None):
-        return self.fit(X).transform(X)
+            return cmeans_predict(
+                X.T, cntr_trained=self.cntr_,
+                m=self.m,
+                error=self.err,
+                maxiter=self.maxiter,
+                metric=self.distance_metric
+            )[0]
+
+        if method == 'chi2':
+            """predict membership from covariance and mean of class"""
+
+            n_features = self.cntr_.shape[0]
+
+            dist = cdist(
+                X,
+                np.atleast_2d(self.cntr_),
+                metric=self.distance_metric,
+                VI=np.linalg.inv(self.cov_)
+            )
+
+            memberships = 1 - chi2.cdf(dist, n_features)
+
+            return memberships.T
+
+    def fit_predict(self, X, y=None):
+        return self.fit(X).predict(X)
 
     def score(self, X=None, y=None):
 
         if self.scoring_metric == 'fpc':
             return self.fpc_
-
-        elif self.scoring_metric == 'silouette':
-            return self.silouette_score_
 
         else:
             raise ValueError("Missing scoring metric")
