@@ -28,6 +28,14 @@ wc.cntr_
 
 * __Flexible__:_can swap out estimators for different methods_
 
+## Installation
+
+This package is available to download and install via pip with the following command:
+
+  `pip install fuzzy_water_clustering --no-deps --extra-index-url https://__token__:<personal_access_token>@gitlab.rsg.pml.ac.uk/api/v4/projects/340/packages/pypi/simple`
+
+This requires you to have a valid access token to the PML gitlab.
+
 ## Plan of action
 
 1. build a framework for clusting data and scoring the cluster set
