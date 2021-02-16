@@ -9,18 +9,18 @@ This will become a python module for the fuzzy clustering of optical spectra.
 Enables integration into [scikit-learn pipelines](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html). Useful for grid searching for the optimal parameters and joining up pre and post processing steps.
 
 ```
-import WaterClassifier
-wc = WaterClassifier(method='cmeans')
+import fuzzy_water_clustering as fwc
+cmeans = fwc.CmeansModel()
 
 # generate a set of clusters to fit the data
 # cluster configuration is held within the WaterClassifier instance
-wc.fit(X, **kwargs)
+cmeans.fit(X, **kwargs)
 
 # classify a set of data
-Y = wc.predict(X)
+Y = cmeans.predict(X)
 
 # access attributes, eg. cluster centers
-wc.cntr_
+cmeans.cntr_
 
 ```
 
