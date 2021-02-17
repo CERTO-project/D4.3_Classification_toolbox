@@ -193,7 +193,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
                 VI=np.linalg.inv(self.cov_)
             )
 
-            memberships = 1 - chi2.cdf(dist, n_features)
+            memberships = 1 - chi2.cdf(dist**2, n_features)
 
             return memberships.T
 
