@@ -127,7 +127,7 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
     classified = classified.where(mask)
 
     # serialize model parameters to add to file?
-    ds_model = serialize_models.pipeline_to_xarray(model)
+    ds_model = pipeline_to_xarray(model)
 
     # merge the dataset of classified data with the one for model parameters
     ds_final = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
