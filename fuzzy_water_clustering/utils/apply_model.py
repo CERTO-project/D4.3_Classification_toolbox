@@ -18,7 +18,7 @@ def choose_power(L):
         d = 2**n
     return 2**(n-1)
 
-def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), **predict_kwargs):
+def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), store_model=True, **predict_kwargs):
     """Given a netcdf file name or xr.Dataset and a fitted model.
     Return an xr.Dataset that contains
     the classified data and model parameters.
@@ -126,10 +126,13 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
     # also adds time coords + wavelength. Drop the latter
     classified = classified.where(mask)
 
-    # serialize model parameters to add to file?
-    ds_model = pipeline_to_xarray(model)
 
-    # merge the dataset of classified data with the one for model parameters
-    ds_final = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
+    if store_model == True:
+        # serialize model parameters to add to file?
+        ds_model = pipeline_to_xarray(model)
 
-    return ds_final
+        # merge the dataset of classified data with the one for model parameters
+        classified = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
+
+
+    return classified
