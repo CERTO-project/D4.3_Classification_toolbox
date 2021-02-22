@@ -11,19 +11,19 @@ def sample_file(
     file,
     step_size=100,
     variables=lambda x : "Rrs" in x,
-    masks=None,
+    mask=None,
     sensor=None,
     time_bounds=None,
     max_pixels=None,
 ):
-    """Given a filename, 
+    """Given a filename,
     return a 2D array with dimensions (bands, pixels)
-    
+
     Used for generating training data for water spectra
     analysis models
-    
+
     Arguments:
-    
+
      - files : a list of files to sample from. Choose carefully
      - list or function to filter the file's data_vars
      - step_size : data indexed in lat and lon as [::step_size]
@@ -36,9 +36,9 @@ def sample_file(
      - xarray.DataArray with dimensions (bands, pixels) and a size
      that is determined by the number of files and step_size or limited
      to max_pixels if defined.
-     
+
     """
-    
+
     ds = xr.open_dataset(file)
 
     # if the variables aren't a list, try filtering
@@ -55,6 +55,17 @@ def sample_file(
         latitude=slice(0,-1,step_size),
         longitude=slice(0,-1,step_size)
     )
+
+    # if mask is supplied. apply mask.
+    if mask:
+        if type(mask) == str:
+            mask = xr.open_dataarray(mask)
+        try:
+            ds = ds.where(mask == True)
+
+        except:
+            print("Invalid mask, skipping mask step")
+
 
     # try to sort by wavelength
     try:
