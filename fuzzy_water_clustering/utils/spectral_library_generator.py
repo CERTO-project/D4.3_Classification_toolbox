@@ -57,7 +57,7 @@ def sample_file(
     )
 
     # if mask is supplied. apply mask.
-    if mask:
+    if mask != None:
         if type(mask) == str:
             mask = xr.open_dataarray(mask)
         try:
