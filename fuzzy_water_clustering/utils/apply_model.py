@@ -135,4 +135,4 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
         classified = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
 
 
-    return classified
+    return classified.sortby('latitude')
