@@ -1,22 +1,15 @@
-{% set name = "fuzzy_water_clustering" %}
-{% set version = "0.0.1" %}
-
-package:
-  name: "{{ name|lower }}"
-  version: "{{ version }}"
+package: "fuzzy_water_clustering"
+  name: "fuzzy_clustering"
+  version: "0.0.3"
 
 source:
-  git_url: https://gitlab.rsg.pml.ac.uk/Angus/fuzzy_classifcation
-  git_rev: master
-
-# build:
-#   number: 1
-#   script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv "
+  git_rev: "0.0.3"
+  git_url: "https://gitlab.rsg.pml.ac.uk/Angus/fuzzy_classifcation"
 
 requirements:
-  host:
-    # - pip
+  build:
     - python
+    - setuptools
 
   run:
     - python
@@ -26,7 +19,4 @@ test:
     - fuzzy_water_clustering
 
 about:
-  home: https://gitlab.rsg.pml.ac.uk/Angus/fuzzy_classifcation
-  license: BSD
-  license_family: BSD
-  summary: Scikit-learn compatible fuzzy clustering estimators, plus utils
+  home: "https://gitlab.rsg.pml.ac.uk/Angus/fuzzy_classifcation/"
