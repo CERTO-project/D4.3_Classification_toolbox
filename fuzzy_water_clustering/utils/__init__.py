@@ -2,11 +2,13 @@
 Utility function for performing fuzzy clustering, including scorers, model serialization, parallelized model application and training data sampling.
 """
 
-__all__ = ['predict_file','pipeline_to_xarray']
+
+# make avilable directly from toplevel
+__all__ = ['predict_file','pipeline_to_xarray','sample_file']
 
 from .apply_model import predict_file
 from .serialize_models import pipeline_to_xarray
-
+from .spectral_library_generator import sample_file
 #
 # # import all scoring metrics
 # import .cluster_scoring as _scoring  # noqa: E402
