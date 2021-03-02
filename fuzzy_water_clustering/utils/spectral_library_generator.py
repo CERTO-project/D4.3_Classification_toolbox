@@ -2,10 +2,7 @@
 spectral library generation
 """
 
-import os
 import xarray as xr
-from glob import glob
-import argparse
 
 def sample_file(
     file,
@@ -26,10 +23,9 @@ def sample_file(
 
      - files : a list of files to sample from. Choose carefully
      - list or function to filter the file's data_vars
-     - step_size : data indexed in lat and lon as [::step_size]
+     - step_size : a dict or iterable of ints, sample every nth pixel
      - mask : for excluding regions. Must match grid
      - sensor : if file list is mixed, choose sensor (required?)
-     - time_bounds : (tmin, tmax) or pandas datetime index (required?)
      - max_pixels : limit on the number of pixels returned
 
     Returns:
@@ -50,11 +46,22 @@ def sample_file(
             )
         )
 
-    # crop down to the variables and subset data
-    ds = ds[variables].isel(
-        latitude=slice(0,-1,step_size),
-        longitude=slice(0,-1,step_size)
-    )
+    # drop unwanted variable
+    ds = ds[variables]
+
+    # apply the step_size variable
+
+    # accept dict of (dim:int) pairs
+    if type(step_size) == dict:
+        ds = ds.iloc[
+            {k, slice(None,None,v) for (k,v) in step_size.items()}
+        ]
+
+    # accept list of ints, apply as slice as if unlabelled
+    elif (type(step_size) == tuple) | (type(step_size) == list):
+        ds = ds[
+            [slice(None,None,x) for x in step_size]
+        ]
 
     # if mask is supplied. apply mask.
 
