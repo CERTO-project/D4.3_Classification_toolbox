@@ -54,7 +54,7 @@ def sample_file(
     # accept dict of (dim:int) pairs
     if type(step_size) == dict:
         ds = ds.iloc[
-            {k, slice(None,None,v) for (k,v) in step_size.items()}
+            {k: slice(None,None,v) for (k,v) in step_size.items()}
         ]
 
     # accept list of ints, apply as slice as if unlabelled

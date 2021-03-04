@@ -88,20 +88,21 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
 
         ds = ds.to_array(dim=dname)
 
-    # single chunk over wavelength requried for reshape
+    # single chunk over features requried for reshape
     ds = ds.chunk({dname:-1,})
+    n_features = ds[dname].size
 
     # fillna() required for predict step, mask re-added after
     # reshape required to obtain 2D array for scikit-learn
-    data = ds.fillna(0).data.reshape((11,-1)).T
+    # use unlabelled, dask arrays, for faster reshaping
+    data = ds.fillna(0).data.reshape((n_features,-1)).T
 
     # use dask array for parallelization
-    # REQUIRED: how to choose an even chunk?????
     chunk_size = choose_power(data.shape[0])
 
-    data = data.rechunk((chunk_size,11))
+    data = data.rechunk((chunk_size,n_features))
 
-
+    # apply the model to chunkwise
     mem = data.map_blocks(
         lambda x : model.predict(x, **predict_kwargs),
         chunks=(data.chunks[0],C),
@@ -112,15 +113,23 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
 
     # turn the classified data into a xr.Dataset
     # chopping and reshaping the data is required
+    # FIXME (anla) : what if time dimension, what if names not latitude..
     classified = xr.DataArray(
         data = np.hstack(
             np.vsplit(
                 mem, data.shape[0] // chunk_size
                 )
-            ).reshape((C,ds['latitude'].size,ds['longitude'].size)),
-        dims=('owt','latitude','longitude'),
-        coords = {'owt':range(C),'latitude':ds['latitude'].values,'longitude':ds['longitude'].values}
-    ).sortby('latitude')
+            ).reshape(
+                [C] + [ds[x].size for x in ds.coords if x != dname]
+            ),
+        dims=(['owt'] + [x for x in ds.dims if x != dname]),
+
+        # this seems like a goofy way to copy coords but OK!
+        # ValueError: coordinate wavelength has dimensions ('wavelength',), but these are not a subset of the DataArray dimensions ['owt', 'time', 'latitude', 'longitude']
+        coords = {**{'owt':range(C)},
+        **{k:v.values for (k,v) in dict(ds.coords).items() if k != dname}}
+    )
+    #removed a sortby('latitude') might need a flip?
 
     # apply mask from original data to classified data
     # also adds time coords + wavelength. Drop the latter
@@ -135,4 +144,4 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
         classified = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
 
 
-    return classified.sortby('latitude')
+    return classified #.sortby('latitude')
