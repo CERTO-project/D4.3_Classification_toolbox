@@ -90,7 +90,7 @@ def sample_file(
     arr = ds.to_array(dim=dname)
 
     pixels = xr.DataArray(
-        arr.data.reshape((11,-1)),
+        arr.data.reshape((arr[dname].size,-1)),
         dims=[dname,'pixel'],
         coords={dname:arr.coords[dname]}
     )
