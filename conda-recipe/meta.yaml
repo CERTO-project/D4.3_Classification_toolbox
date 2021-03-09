@@ -1,0 +1,21 @@
+package:
+  name: fuzzy_water_clustering
+  version: "0.0.3"
+
+source:
+  path: ../.
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+
+test:
+  imports:
+
+
+about:
+  home: https://gitlab.rsg.pml.ac.uk/Angus/fuzzy_classifcation/
