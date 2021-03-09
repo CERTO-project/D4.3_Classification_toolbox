@@ -109,7 +109,7 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
         dtype=float,
     ).compute()
 
-    print(f"mem.shape {mem.shape}, chunk_size {chunk_size}, data.shape {data.shape}")
+    # print(f"mem.shape {mem.shape}, chunk_size {chunk_size}, data.shape {data.shape}")
 
     # turn the classified data into a xr.Dataset
     # chopping and reshaping the data is required
@@ -122,7 +122,7 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
             ).reshape(
                 [C] + [ds[x].size for x in ds.coords if x != dname]
             ),
-        dims=(['owt'] + [x for x in ds.dims if x != dname]),
+        dims=(['owt'] + [x for x in ds.coords if x != dname]),
 
         # this seems like a goofy way to copy coords but OK!
         # ValueError: coordinate wavelength has dimensions ('wavelength',), but these are not a subset of the DataArray dimensions ['owt', 'time', 'latitude', 'longitude']
