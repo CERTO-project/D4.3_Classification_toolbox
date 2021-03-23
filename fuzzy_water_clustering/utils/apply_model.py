@@ -18,7 +18,7 @@ def choose_power(L):
         d = 2**n
     return 2**(n-1)
 
-def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), store_model=True, **predict_kwargs):
+def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), store_model=True, **predict_kwargs):
     """Given a netcdf file name or xr.Dataset and a fitted model.
     Return an xr.Dataset that contains
     the classified data and model parameters.
@@ -37,11 +37,11 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
     """
 
     # if the dataset argument is a string, assume it is a filename
-    if type(dataset) == str:
-        dataset = xr.open_dataset(dataset, chunks={})
+    if type(file) == str:
+        ds = xr.open_dataset(dataset, chunks={})
 
     # if the dataset isn't an xr.Dataset raise error
-    if type(dataset) != xr.Dataset:
+    if type(ds) != xr.Dataset:
         raise Exception(
             "Invalid 'dataset' argument, use\n\
             either filename or xarray.Dataset object"
