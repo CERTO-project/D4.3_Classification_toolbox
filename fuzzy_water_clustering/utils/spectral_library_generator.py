@@ -3,6 +3,7 @@ spectral library generation
 """
 
 import xarray as xr
+import re
 
 def sample_file(
     file,
@@ -35,7 +36,11 @@ def sample_file(
 
     """
 
-    ds = xr.open_dataset(file)
+    if isinstance(file, str):
+        ds = xr.open_dataset(file)
+    
+    else:
+        ds = file
 
     # if the variables aren't a list, try filtering
     if type(variables) != list:
@@ -46,7 +51,7 @@ def sample_file(
             )
         )
 
-    # drop unwanted variable
+    # drop unwanted variables
     ds = ds[variables]
 
     # apply the step_size variable
@@ -79,7 +84,7 @@ def sample_file(
 
     # try to sort by wavelength
     try:
-        ds = ds.rename({v:int(v[-3:]) for v in ds.data_vars})
+        ds = ds.rename({v:int(re.findall(r'\d+', v)[0]) for v in ds.data_vars})
         ds = ds[[x for x in sorted(ds.data_vars)]]
         dname='wavelength'
 
