@@ -28,8 +28,11 @@ if os.path.isfile('./coffee.nc') == False:
     da = xr.DataArray(
         data = img,
         dims = ('x','lat','vars'),
-        coords = {'x':range(img.shape[0]),
-                  'vars':['1vand_1','Rrs_422','test']}
+        coords = {
+            'x':range(img.shape[0]),
+            'lat':range(img.shape[1]),
+            'vars':['1vand_1','Rrs_422','test']
+            }
     )
 
     ds = da.to_dataset(dim='vars').to_netcdf('coffee.nc')
@@ -44,4 +47,4 @@ cmeans = fwc.CmeansModel(c=3,m=1.5)
 cmeans.fit(training_data)
 
 # # # # # APPLY TRAINED MODEL USING PREDICT FILE # # # # #
-ds_classified = fwc.predict_file('coffee.nc', cmeans)
+ds_classified = fwc.predict_file('coffee.nc', cmeans, variables='all', store_model=False)
