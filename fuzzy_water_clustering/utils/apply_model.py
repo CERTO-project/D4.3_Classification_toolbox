@@ -9,6 +9,7 @@ import numpy as np
 import xarray as xr
 import dask.array as da
 from .serialize_models import pipeline_to_xarray
+import warnings
 
 def choose_power(L):
     d = 1
@@ -67,6 +68,10 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     if type(variables) == list:
         ds = ds[variables]
 
+    else:
+        variables = list(ds.data_vars)
+
+
     # copy mask from original dataset to be added at end.
     # Required as .predict() will fail if nans are present.
     mask = xr.where(ds[variables[0]].isnull(), False, True)
@@ -117,7 +122,6 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
 
     # turn the classified data into a xr.Dataset
     # chopping and reshaping the data is required
-    # FIXME (anla) : what if time dimension, what if names not latitude..
     classified = xr.DataArray(
         data = np.hstack(
             np.vsplit(
