@@ -56,12 +56,16 @@ def predict_file(dataset, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7),
         # for pipelines, clustering should come last?
         C = model.steps[-1][-1].get_params()['c']
 
-    # filter the data variables by the variables function
-    if str(type(variables)) == "<class 'function'>":
-        variables = list(filter(variables, dataset.data_vars))
+    if type(variables).__name__ == "function":
+        variables = list(
+            filter(
+                variables,
+                ds.data_vars
+            )
+        )
 
-    # select only the variables given or filtered
-    ds = dataset[variables]
+    if type(variables) == list:
+        ds = ds[variables]
 
     # copy mask from original dataset to be added at end.
     # Required as .predict() will fail if nans are present.

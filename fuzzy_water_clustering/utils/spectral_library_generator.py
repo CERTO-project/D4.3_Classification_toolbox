@@ -48,16 +48,16 @@ def sample_file(
 
     # accept different variable arugment types
 
-    if type(variables) == list:
-        ds = ds[variables]
-
-    elif type(variables).__name__ == "function":
+    if type(variables).__name__ == "function":
         variables = list(
             filter(
                 variables,
                 ds.data_vars
             )
         )
+
+    if type(variables) == list:
+        ds = ds[variables]
 
     # apply the step_size variable
 
