@@ -36,14 +36,22 @@ def sample_file(
 
     """
 
-    if isinstance(file, str):
+
+    # Accept different input types, str, dataset or
+
+    if type(file) == str:
         ds = xr.open_dataset(file)
-    
+
     else:
         ds = file
 
-    # if the variables aren't a list, try filtering
-    if type(variables) != list:
+
+    # accept different variable arugment types
+
+    if type(variables) == list:
+        ds = ds[variables]
+
+    elif type(variables).__name__ == "function":
         variables = list(
             filter(
                 variables,
@@ -51,22 +59,24 @@ def sample_file(
             )
         )
 
-    # drop unwanted variables
-    ds = ds[variables]
-
     # apply the step_size variable
 
     # accept dict of (dim:int) pairs
     if type(step_size) == dict:
-        ds = ds.iloc[
-            {k: slice(None,None,v) for (k,v) in step_size.items()}
-        ]
+        ds = ds.isel(
+            **{k: slice(None,None,v) for (k,v) in step_size.items()}
+        )
 
     # accept list of ints, apply as slice as if unlabelled
     elif (type(step_size) == tuple) | (type(step_size) == list):
-        ds = ds[
-            [slice(None,None,x) for x in step_size]
-        ]
+        ds = ds.isel(
+            **{var:slice(None,None,x) for (var,x) in zip(ds.dims,step_size)}
+        )
+
+    elif type(step_size) == int:
+        ds = ds.isel(
+            **{dim: slice(None,None,step_size) for dim in ds.dims}
+        )
 
     # if mask is supplied. apply mask.
 

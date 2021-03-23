@@ -20,9 +20,6 @@ import numpy as np
 # scikit-learn checks
 from sklearn.utils.validation import check_array, check_is_fitted, check_random_state
 
-# scikit-learn scoring metric REMOVE?
-from sklearn.metrics import silhouette_score
-
 # scikit-learn base classes
 from sklearn.base import BaseEstimator, ClusterMixin
 
@@ -88,7 +85,6 @@ class CmeansModel(BaseEstimator, ClusterMixin):
     jm_ =
     p_ =
     fpc_ = fuzzy partion coefficient (score)
-    silouette_score_ = average silouette index (score)
 
     """
 
@@ -148,7 +144,6 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             self.jm_ = jm
             self.p_ = p
             self.fpc_ = fpc
-            self.silouette_score_ = silhouette_score(X, self.labels_)
 
             # calculate covariance from training data
             self.cov_ = np.stack(
@@ -201,9 +196,4 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         return self.fit(X).predict(X)
 
     def score(self, X=None, y=None):
-
-        if self.scoring_metric == 'fpc':
-            return self.fpc_
-
-        else:
-            raise ValueError("Missing scoring metric")
+        return self.fpc_
