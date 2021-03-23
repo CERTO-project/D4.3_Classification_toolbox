@@ -38,7 +38,7 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
 
     # if the dataset argument is a string, assume it is a filename
     if type(file) == str:
-        ds = xr.open_dataset(dataset, chunks={})
+        ds = xr.open_dataset(file, chunks={})
 
     # if the dataset isn't an xr.Dataset raise error
     if type(ds) != xr.Dataset:
