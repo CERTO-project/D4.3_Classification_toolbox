@@ -36,6 +36,8 @@ This package is available to download and install via pip with the following com
 
 where, <personal_access_token> is a personal access token with at least `read_api` scope.
 
+If you ever need to upgrade, just run `pip install --upgrade fuzzy_clustering ... etc` like above.
+
 ## Plan of action
 
 1. build a framework for clusting data and scoring the cluster set
