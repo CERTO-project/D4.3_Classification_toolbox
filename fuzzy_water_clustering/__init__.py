@@ -1,26 +1,13 @@
-""""
-fuzzy_water_clustering, a scikit-learn compatible fuzzy cmeans (FCM) toolbox.
+# """
+# Utility function for performing fuzzy clustering, including scorers, model serialization, parallelized model application and training data sampling.
+# """
+#
+#
+# # make avilable directly from toplevel
+# # __all__ = ['predict_file','pipeline_to_xarray','sample_file','scoring']
 
-This package provides cmeans estimator objects for unsupervised clustering of data, along with scoring metrics that can be used with scikit-learn. Examples and guides are included in the ./doc/guides folder.
+from .apply_model import predict_file
+from .serialize_models import pipeline_to_xarray
+from .sample_netcdf import sample_file
 
-Recommended Use
----------------
->>> import skfuzzy as fuzz
-
-"""
-
-__all__ = []
-
-######################
-# Subpackage imports #
-######################
-
-# Core clustering estimator objects
-import fuzzy_water_clustering.utils as _utils  # noqa: E402
-from fuzzy_water_clustering.utils import *  # noqa: E402,F403
-__all__.extend(_utils.__all__)
-
-# Fuzzy membership function subpackage
-import fuzzy_water_clustering.estimators as _estimators  # noqa: E402
-from fuzzy_water_clustering.estimators import *  # noqa: E402,F403
-__all__.extend(_estimators.__all__)
+from . import cluster_scoring
