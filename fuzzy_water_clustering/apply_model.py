@@ -13,7 +13,7 @@ import warnings
 
 def choose_power(L):
     d = 1
-    n=1
+    n = 0
     while L % d == 0:
         n += 1
         d = 2**n
