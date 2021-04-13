@@ -109,7 +109,7 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     # fillna() required for predict step, mask re-added after
     # reshape required to obtain 2D array for scikit-learn
     # use unlabelled, dask arrays, for faster reshaping
-    data = ds.fillna(0).data.reshape((n_features,-1)).T
+    data = ds.fillna(0).data.reshape((n_features,-1))
 
     # apply the model to chunkwise
     mem = data.map_blocks(
@@ -118,14 +118,14 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
         dtype=float,
     ).compute()
 
-    classified = mask[:C,].copy()
+    classified = ds[:C,].copy()
 
     classified.data = mem.reshape((C,*ds.shape[1:]))
 
     # classified = classified.where(ds[:C,].isnull() == False)
 
     # FIXME: hardcode!
-    classified = classified.sortby('latitude')
+    # classified = classified.sortby('latitude')
 
     # name the optical water type dimension "owt"
     classified.rename({dname,'owt'})
