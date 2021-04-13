@@ -37,6 +37,8 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
         ds_classified = predict_file(file_name, pipeline)
     """
 
+    # # # HANDLE DATA INPUT # # #
+
     # if the dataset argument is a string, assume it is a filename
     if type(file) == str:
         ds = xr.open_dataset(file, chunks={})
@@ -109,43 +111,30 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     # use unlabelled, dask arrays, for faster reshaping
     data = ds.fillna(0).data.reshape((n_features,-1)).T
 
-    # use dask array for parallelization
-    chunk_size = choose_power(data.shape[0])
-
-    data = data.rechunk((chunk_size,n_features))
-
     # apply the model to chunkwise
     mem = data.map_blocks(
-        lambda x : model.predict(x, **predict_kwargs),
-        chunks=(data.chunks[0],C),
+        lambda x : model.predict(x.T).T,
+        chunks=((C),data.chunks[1][::]),
         dtype=float,
     ).compute()
 
-    # print(f"mem.shape {mem.shape}, chunk_size {chunk_size}, data.shape {data.shape}")
+    classified = mask[:C,].copy()
 
-    # turn the classified data into a xr.Dataset
-    # chopping and reshaping the data is required
-    classified = xr.DataArray(
-        data = np.hstack(
-            np.vsplit(
-                mem, data.shape[0] // chunk_size
-                )
-            ).reshape(
-                [C] + [ds[x].size for x in ds.coords if x != dname]
-            ),
-        dims=(['owt'] + [x for x in ds.coords if x != dname]),
+    classified.data = mem.reshape((C,*ds.shape[1:]))
 
-        # this seems like a goofy way to copy coords but OK!
-        # ValueError: coordinate wavelength has dimensions ('wavelength',), but these are not a subset of the DataArray dimensions ['owt', 'time', 'latitude', 'longitude']
-        coords = {**{'owt':range(C)},
-        **{k:v.values for (k,v) in dict(ds.coords).items() if k != dname}}
-    )
-    #removed a sortby('latitude') might need a flip?
+    # classified = classified.where(ds[:C,].isnull() == False)
+
+    # FIXME: hardcode!
+    classified = classified.sortby('latitude')
+
+    # name the optical water type dimension "owt"
+    classified.rename({dname,'owt'})
 
     # apply mask from original data to classified data
     # also adds time coords + wavelength. Drop the latter
     classified = classified.where(mask)
 
+    # optionally store model parameters inside the netcdf
 
     if store_model == True:
         # serialize model parameters to add to file?
@@ -155,4 +144,4 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
         classified = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
 
 
-    return classified #.sortby('latitude')
+    return classified
