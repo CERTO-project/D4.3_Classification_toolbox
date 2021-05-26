@@ -1,6 +1,11 @@
 # Ocean water spectra classifier
 
-This will become a python module for the fuzzy clustering of optical spectra.
+This is python package for the fuzzy clustering of optical spectra.
+
+## [Video seminar](https://rsg.pml.ac.uk/shared_files/brj/EOSA_Seminar/20210520_Laurenson/zoom_0.mp4)
+An EOSA seminar discussing the science of segmenting the ocean using clustering and an introduction to this fuzzy clustering package, delivered on 20-05-2021.
+
+https://rsg.pml.ac.uk/shared_files/brj/EOSA_Seminar/20210520_Laurenson/zoom_0.mp4
 
 ## __Specification__: _Solution_
 
@@ -21,7 +26,6 @@ Y = cmeans.predict(X)
 
 # access attributes, eg. cluster centers
 cmeans.cntr_
-
 ```
 
 * __Self consistent repo__: _conda environment `.yml` file_
