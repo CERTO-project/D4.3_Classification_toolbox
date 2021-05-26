@@ -35,8 +35,6 @@ class NetcdfWrapper():
         model.fit(ds)
 
     """
-    # wrapper class for scikit-learn models
-    # so they can be applied to chunked netcdf
 
     def __init__(self, model, **kwargs):
         # create the model
@@ -90,14 +88,14 @@ class NetcdfWrapper():
         data = np.nan_to_num(data)
         data = data.rechunk(('auto',-1))
 
-        print(f"shape = {data.shape}, chunks = {data.chunks}")
+        # print(f"shape = {data.shape}, chunks = {data.chunks}")
 
         # number of output features
         # FIXME: specific to CmeansModel right now...
         C = self.model.c
         M = X[list(X.data_vars)[0]].size
 
-        print(f"C = {C}, M = {M}")
+        # print(f"C = {C}, M = {M}")
 
         # apply the model to chunkwise
         membership_flattened = data.map_blocks(
@@ -106,21 +104,22 @@ class NetcdfWrapper():
             dtype=float,
         ).persist()
 
-        # reassemble the output data
+        # copy the input dataset, dropping all variables
         ds_out = dataset.drop_vars(dataset.data_vars)
 
-        print(f"membership flattened = {membership_flattened}")
+        # print(f"membership flattened = {membership_flattened}")
 
-#         return membership_flattened, ds_out
-
-        ds_out['classified'] = xr.Variable(
+        # reshape the flattened memberhip array and put
+        # into a clustered variable of the output dataset
+        # reapply the mask of land and cloud
+        ds_out['clustered'] = xr.Variable(
             dims = list(ds_out.dims)+['optical_water_type'],
-            data = da.atleast_3d(membership_flattened.reshape([ds_out.dims[x] for x in ds_out.dims] + [C])),
+            data = da.atleast_3d(membership_flattened.T.reshape([ds_out.dims[x] for x in ds_out.dims] + [C])),
             attrs= {}
-        )
+        ).where(mask==0)
 
+        # split the clustered variable into seperate data variables
         ds_out['optical_water_type'] = [f'owt_{x}' for x in range(C)]
-
-        ds_out = ds_out['classified'].to_dataset(dim='optical_water_type')
+        ds_out = ds_out['clustered'].to_dataset(dim='optical_water_type')
 
         return ds_out
