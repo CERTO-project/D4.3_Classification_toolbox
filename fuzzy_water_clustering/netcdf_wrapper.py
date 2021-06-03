@@ -46,9 +46,25 @@ class NetcdfWrapper():
         # use unlabelled arrays to avoid overhead
 
         X = dataset.to_array(dim='variables')
-        data = X.transpose(...,'variables').data.reshape(-1,X['variables'].size)
+        data = X.transpose(...,'variables').data.reshape(
+            -1,X['variables'].size,
+        )
 
         return data
+
+    def get_out_dimsize(self, X):
+        # get the length of the new dimension
+        # by running the estimator on a small sample
+
+        # shorten data to 100 points (or less)
+        try:
+            X_small = X[:100,:]
+        except:
+            X_small = X
+
+        Y_small = self.model.predict(X_small)
+
+        return np.atleast_2d(Y_small).shape[0]
 
     def fit(self, dataset, Y=None):
         # takes xarray dataset, reshapes
@@ -56,7 +72,6 @@ class NetcdfWrapper():
 
         # record the training data variables and version
         self.data_vars_ = dataset.data_vars
-        self.processing_level_ = dataset.processing_level
 
         # reshape the dataset for scikit-learn (n_observations, m_features)
         data = self.flatten_data(dataset)
@@ -66,6 +81,23 @@ class NetcdfWrapper():
 
         # fit the model
         self.model.fit(X_train)
+
+        # get the n_features_out
+        self.n_features_out = self.get_out_dimsize(X_train)
+
+    def predict_chunk(self, x):
+        # reshapes a single chunk, applies model and re-reshapes back
+        # assumes last dim is the feature dim
+        chunk_shape = x.shape
+
+        # flatten the chunk
+        x = x.reshape(-1,chunk_shape[-1])
+
+        # apply model
+        y = self.model.predict(x).T
+
+        # re-reshape chunk
+        return y.reshape(chunk_shape[:-1]+(self.n_features_out,))
 
     def predict(self, dataset):
         # a parallelized predict step
@@ -77,10 +109,14 @@ class NetcdfWrapper():
         # does this preseve the order?
         X = dataset[list(self.data_vars_)]
 
-        assert self.processing_level_ == X.attrs['processing_level'], \
-                   f"given dataset processing level \"{X.attrs['processing_level']}\" does not match expected processing level \"{self.processing_level_}\""
+        # get dimension order from variable
+        new_dims = X[list(X.data_vars)[0]].dims
+
+        # assert self.processing_level_ == X.attrs['processing_level'], \
+        #            f"given dataset processing level \"{X.attrs['processing_level']}\" does not match expected processing level \"{self.processing_level_}\""
 
         # reshape the dataset for scikit-learn (n_observations, m_features)
+        # FIXME: reshaping the entire dataset is unweildly. Better do it inside the map_blocks call
         data = self.flatten_data(X.fillna(0))
 
         # for prediction, fill nans but save a mask
@@ -92,29 +128,47 @@ class NetcdfWrapper():
 
         # number of output features
         # FIXME: specific to CmeansModel right now...
-        C = self.model.c
+        C = self.n_features_out
         M = X[list(X.data_vars)[0]].size
 
         # print(f"C = {C}, M = {M}")
 
         # apply the model to chunkwise
-        membership_flattened = data.map_blocks(
-            lambda x : self.model.predict(x),
-            chunks=(data.chunks[0],(C)),
+
+        X = dataset.to_array(dim='variables')
+
+        # set the variables to last position
+        data = X.transpose(...,'variables').fillna(0)
+
+        # set variable dim to have a single chunk
+        data = data.chunk({'variables':-1})
+
+        print(data.dims)
+
+        # take out the unlabelled array
+        data = data.data
+
+        print(data.chunks)
+        print(data.chunks[:-1] + (tuple(C for x in data.chunks[-1]),))
+
+        membership_data = data.map_blocks(
+            self.predict_chunk,
+            chunks = data.chunks[:-1] + (tuple(C for x in data.chunks[-1]),),
             dtype=float,
         ).persist()
+
+        print(membership_data.shape, membership_data.chunks)
 
         # copy the input dataset, dropping all variables
         ds_out = dataset.drop_vars(dataset.data_vars)
 
-        # print(f"membership flattened = {membership_flattened}")
-
         # reshape the flattened memberhip array and put
         # into a clustered variable of the output dataset
         # reapply the mask of land and cloud
+        # FIXME: is np.atleast_3d causing problems for 2D data?
         ds_out['clustered'] = xr.Variable(
-            dims = list(ds_out.dims)+['optical_water_type'],
-            data = da.atleast_3d(membership_flattened.T.reshape([ds_out.dims[x] for x in ds_out.dims] + [C])),
+            dims = list(new_dims) + ['optical_water_type'],
+            data = membership_data,
             attrs= {}
         ).where(mask==0)
 
