@@ -124,14 +124,14 @@ class NetcdfWrapper():
         data = np.nan_to_num(data)
         data = data.rechunk(('auto',-1))
 
-        # print(f"shape = {data.shape}, chunks = {data.chunks}")
+        # # print(f"shape = {data.shape}, chunks = {data.chunks}")
 
         # number of output features
         # FIXME: specific to CmeansModel right now...
         C = self.n_features_out
         M = X[list(X.data_vars)[0]].size
 
-        # print(f"C = {C}, M = {M}")
+        # # print(f"C = {C}, M = {M}")
 
         # apply the model to chunkwise
 
@@ -143,13 +143,13 @@ class NetcdfWrapper():
         # set variable dim to have a single chunk
         data = data.chunk({'variables':-1})
 
-        print(data.dims)
+        # print(data.dims)
 
         # take out the unlabelled array
         data = data.data
 
-        print(data.chunks)
-        print(data.chunks[:-1] + (tuple(C for x in data.chunks[-1]),))
+        # print(data.chunks)
+        # print(data.chunks[:-1] + (tuple(C for x in data.chunks[-1]),))
 
         membership_data = data.map_blocks(
             self.predict_chunk,
@@ -157,7 +157,7 @@ class NetcdfWrapper():
             dtype=float,
         ).persist()
 
-        print(membership_data.shape, membership_data.chunks)
+        # print(membership_data.shape, membership_data.chunks)
 
         # copy the input dataset, dropping all variables
         ds_out = dataset.drop_vars(dataset.data_vars)
