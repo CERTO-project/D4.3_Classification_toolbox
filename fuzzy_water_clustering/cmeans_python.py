@@ -179,7 +179,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         if method == 'chi2':
             """predict membership from covariance and mean of class"""
 
-            n_features = self.cntr_.shape[0]
+            n_features = self.cntr_.shape[1]
 
             dist = cdist(
                 X,
