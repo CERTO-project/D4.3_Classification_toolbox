@@ -157,7 +157,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         return self
 
-    def predict(self, X, y=None, method='default'):
+    def predict(self, X, y=None, method='default', chi2_metric='mahalanobis'):
         ''''\n    Prediction of new data in given a trained fuzzy c-means framework [1].\n\n    Parameters\n    ----------\n    test_data : 2d array, size (S, N)\n        New, independent data set to be predicted based on trained c-means\n        from ``cmeans``. N is the number of data sets; S is the number of\n        features within each sample vector.\n    cntr_trained : 2d array, size (S, c)\n        Location of trained centers from prior training c-means.\n    m : float\n        Array exponentiation applied to the membership function u_old at each\n        iteration, where U_new = u_old ** m.\n    error : float\n        Stopping criterion; stop early if the norm of (u[p] - u[p-1]) < error.\n    maxiter : int\n        Maximum number of iterations allowed.\n    metric: string\n        By default is set to euclidean. Passes any option accepted by\n        ``scipy.spatial.distance.cdist``.\n    init : 2d array, size (S, N)\n        Initial fuzzy c-partitioned matrix. If none provided, algorithm is\n        randomly initialized.\n    seed : int\n        If provided, sets random seed of init. No effect if init is\n        provided. Mainly for debug/testing purposes.\n\n    Returns\n    -------\n    u : 2d array, (S, N)\n        Final fuzzy c-partitioned matrix.\n    u0 : 2d array, (S, N)\n        Initial guess at fuzzy c-partitioned matrix (either provided init or\n        random guess used if init was not provided).\n    d : 2d array, (S, N)\n        Final Euclidian distance matrix.\n    jm : 1d array, length P\n        Objective function history.\n    p : int\n        Number of iterations run.\n    fpc : float\n        Final fuzzy partition coefficient.\n\n    Notes\n    -----\n    Ross et al. [1]_ did not include a prediction algorithm to go along with\n    fuzzy c-means. This prediction algorithm works by repeating the clustering\n    with fixed centers, then efficiently finds the fuzzy membership at all\n    points.\n\n    References\n    ----------\n    .. [1] Ross, Timothy J. Fuzzy Logic With Engineering Applications, 3rd ed.\n           Wiley. 2010. ISBN 978-0-470-74376-8 pp 352-353, eq 10.28 - 10.35.\n    '''
 
         # check if is check_is_fitted
@@ -179,22 +179,24 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         if method == 'chi2':
             """predict membership from covariance and mean of class"""
 
-            n_features = self.cntr_.shape[1]
-            n_classes = self.cntr_.shape[0]
-            if len(spectrum.shape)==1:
-                memberships=np.zeros((1,n_classes))
-            else:
-                memberships=np.zeros(spectrum.shape[:-1]+(n_classes,))
+            # explicitly define number of features and classes
+            n_classes, n_features = self.cntr_.shape
+
+            # create an array of zeros to fill with memberships
+            # shaped as X, but n_features is replaced with n_classes    
+            memberships=np.zeros(X.shape[:-1]+(n_classes,))
+            
+            # for each class calc membership
             for n in range(n_classes):
-                print(n)
+
                 dist = cdist(
-                    spectrum.reshape(-1,n_features),
-                    means[:,n].reshape(1, n_features),
-                    metric='mahalanobis',
-                    VI=inverse_cov[n,:,:]
+                    X.reshape(-1,n_features),
+                    self.cntr_[:,n].reshape(1, n_features),
+                    metric=chi2_metric,
+                    VI=np.linalg.inv(self.cov_)[n,:,:]
                     )
                 memberships[:,n]=(1 - chi2.cdf(dist**2, n_features))
-            return memberships.flatten().T
+            return memberships.T
 
     def fit_predict(self, X, y=None):
         return self.fit(X).predict(X)
