@@ -180,17 +180,21 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             """predict membership from covariance and mean of class"""
 
             n_features = self.cntr_.shape[1]
-
-            dist = cdist(
-                X,
-                np.atleast_2d(self.cntr_),
-                metric=self.distance_metric,
-                VI=np.linalg.inv(self.cov_)
-            )
-
-            memberships = 1 - chi2.cdf(dist**2, n_features)
-
-            return memberships.T
+            n_classes = self.cntr_.shape[0]
+            if len(spectrum.shape)==1:
+                memberships=np.zeros((1,n_classes))
+            else:
+                memberships=np.zeros(spectrum.shape[:-1]+(n_classes,))
+            for n in range(n_classes):
+                print(n)
+                dist = cdist(
+                    spectrum.reshape(-1,n_features),
+                    means[:,n].reshape(1, n_features),
+                    metric='mahalanobis',
+                    VI=inverse_cov[n,:,:]
+                    )
+                memberships[:,n]=(1 - chi2.cdf(dist**2, n_features))
+            return memberships.flatten().T
 
     def fit_predict(self, X, y=None):
         return self.fit(X).predict(X)
