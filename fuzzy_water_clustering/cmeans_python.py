@@ -190,11 +190,11 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             for n in range(n_classes):
                 dist = cdist(
                     X.reshape(-1,n_features),
-                    self.cntr_[:,n].reshape(1, n_features),
+                    self.cntr_[n,:].reshape(1, n_features),
                     metric=chi2_metric,
                     VI=np.linalg.inv(self.cov_[n,:,:])
                 )
-                memberships[:,n]=(1 - chi2.cdf(dist**2, n_features))
+                memberships[:,n]=(1 - chi2.cdf(dist**2, n_features)).squeeze()
             return memberships.T
 
     def fit_predict(self, X, y=None):
