@@ -188,13 +188,12 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             
             # for each class calc membership
             for n in range(n_classes):
-
                 dist = cdist(
                     X.reshape(-1,n_features),
                     self.cntr_[:,n].reshape(1, n_features),
                     metric=chi2_metric,
-                    VI=np.linalg.inv(self.cov_)[n,:,:]
-                    )
+                    VI=np.linalg.inv(self.cov_[n,:,:])
+                )
                 memberships[:,n]=(1 - chi2.cdf(dist**2, n_features))
             return memberships.T
 
