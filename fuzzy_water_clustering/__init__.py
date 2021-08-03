@@ -8,7 +8,7 @@
 from .apply_model import predict_file
 from .serialize_models import pipeline_to_xarray
 from .sample_netcdf import sample_file
-from .netcdf_wrapper import NetcdfWrapper
+from .xarray_wrapper import XarrayWrapper
 
 from .cmeans_python import CmeansModel
 from . import cluster_scoring
