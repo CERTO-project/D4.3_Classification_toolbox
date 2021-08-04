@@ -85,7 +85,7 @@ class XarrayWrapper():
         # get the n_features_out
         self.n_features_out = self.get_out_dimsize(X_train)
 
-    def predict_chunk(self, x, method='default', chi2_metric='mahalanobis'):
+    def predict_chunk(self, x, **kwargs):#method='default', chi2_metric='mahalanobis'):
         # reshapes a single chunk, applies model and re-reshapes back
         # assumes last dim is the feature dim
         chunk_shape = x.shape
@@ -94,12 +94,12 @@ class XarrayWrapper():
         x = x.reshape(-1,chunk_shape[-1])
 
         # apply model
-        y = self.model.predict(x, method=method, chi2_metric=chi2_metric).T
+        y = self.model.predict(x, **kwargs).T#method=method, chi2_metric=chi2_metric).T
 
         # re-reshape chunk
         return y.reshape(chunk_shape[:-1]+(self.n_features_out,))
 
-    def predict(self, dataset, method='default', chi2_metric='mahalanobis'):
+    def predict(self, dataset, **kwargs):#method='default', chi2_metric='mahalanobis'):
         # a parallelized predict step
 
         # try to select vars
@@ -152,7 +152,8 @@ class XarrayWrapper():
         # print(data.chunks[:-1] + (tuple(C for x in data.chunks[-1]),))
 
         membership_data = data.map_blocks(
-            lambda x:self.predict_chunk(x, method=method, chi2_metric=chi2_metric),
+            # lambda x:self.predict_chunk(x, method=method, chi2_metric=chi2_metric),
+            lambda x:self.predict_chunk(x, **kwargs),
             chunks = data.chunks[:-1] + (tuple(C for x in data.chunks[-1]),),
             # kwargs = {'method':method,'chi2_metric':chi2_metric},
             dtype=float,
