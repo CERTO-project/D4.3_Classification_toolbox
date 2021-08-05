@@ -7,10 +7,12 @@ AUTHOR:
 
 DESCRIPTION:
     This script tests estimators against scikit-learn
-    standards using sklearn.utils.estimator_checks. 
+    standards using sklearn.utils.estimator_checks
+    which adds tests depending on what sklearn Base
+    or MixIn classes the custom estimators inherit.
     
     It is designed for use with pytest and will be
-    automatically picked up by pytest command:
+    automatically picked up by pytest command.
 
 USAGE:
     # Call all test scrips using pytest, including

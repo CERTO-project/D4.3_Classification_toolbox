@@ -47,7 +47,8 @@ class XarrayWrapper():
 
         X = dataset.to_array(dim='variables')
         data = X.transpose(...,'variables').data.reshape(
-            -1,X['variables'].size,
+            -1,
+            X['variables'].size
         )
 
         return data
@@ -99,8 +100,9 @@ class XarrayWrapper():
         # re-reshape chunk
         return y.reshape(chunk_shape[:-1]+(self.n_features_out,))
 
-    def predict(self, dataset, **kwargs):#method='default', chi2_metric='mahalanobis'):
-        # a parallelized predict step
+    def predict(self, dataset, **kwargs) -> xr.Dataset:#method='default', chi2_metric='mahalanobis'):
+        # a parallelized predict step with options
+        # @anla : this method does too much, maybe break it up
 
         # try to select vars
         assert set(self.data_vars_).issubset(set(dataset.data_vars)), \
@@ -112,45 +114,28 @@ class XarrayWrapper():
         # get dimension order from variable
         new_dims = X[list(X.data_vars)[0]].dims
 
-        # assert self.processing_level_ == X.attrs['processing_level'], \
-        #            f"given dataset processing level \"{X.attrs['processing_level']}\" does not match expected processing level \"{self.processing_level_}\""
-
-        # reshape the dataset for scikit-learn (n_observations, m_features)
-        # FIXME: reshaping the entire dataset is unweildly. Better do it inside the map_blocks call
-        data = self.flatten_data(X.fillna(0))
-
-        # for prediction, fill nans but save a mask
+        # # for prediction, fill nans but save a mask
         mask = X[list(X.data_vars)[0]].isnull()
-        data = np.nan_to_num(data)
-        data = data.rechunk(('auto',-1))
-
-        # # print(f"shape = {data.shape}, chunks = {data.chunks}")
-
+        
         # number of output features
-        # FIXME: specific to CmeansModel right now...
         C = self.n_features_out
-        M = X[list(X.data_vars)[0]].size
-
-        # # print(f"C = {C}, M = {M}")
-
+        
         # apply the model to chunkwise
 
         X = dataset.to_array(dim='variables')
 
+        # @anla : bad naming here
         # set the variables to last position
         data = X.transpose(...,'variables').fillna(0)
 
         # set variable dim to have a single chunk
         data = data.chunk({'variables':-1})
 
-        # print(data.dims)
-
-        # take out the unlabelled array
+        # take out the unlabelled array, bad naming
         data = data.data
 
-        # print(data.chunks)
-        # print(data.chunks[:-1] + (tuple(C for x in data.chunks[-1]),))
-
+        # @anla : it is annoying that the kwargs argument
+        # does work in map_blocks
         membership_data = data.map_blocks(
             # lambda x:self.predict_chunk(x, method=method, chi2_metric=chi2_metric),
             lambda x:self.predict_chunk(x, **kwargs),
