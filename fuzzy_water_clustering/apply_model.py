@@ -9,7 +9,13 @@ import numpy as np
 import xarray as xr
 import dask.array as da
 from .serialize_models import pipeline_to_xarray
-import warnings
+import logging
+
+logger = logging.getLogger()
+
+stream_handler = logging.StreamHandler()
+
+logger.addHandler(stream_handler)
 
 def choose_power(L):
     d = 1
@@ -36,6 +42,8 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     Usage:
         ds_classified = predict_file(file_name, pipeline)
     """
+
+    logger.warning("Depreciation warning: predict_file is being replaced by XarrayWrapper")
 
     # # # HANDLE DATA INPUT # # #
 
@@ -94,7 +102,7 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     # if cannot convert to ints and order, then raise warning?
     except:
         dname='variables'
-        warnings.warn(
+        logger.warning(
             "Expected variable names ending with 3 digits\n\
             indicating integer wavelengths in nanometers\n\
             not found. Therefore proceeding with,\n\
@@ -135,7 +143,6 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     classified = classified.where(mask)
 
     # optionally store model parameters inside the netcdf
-
     if store_model == True:
         # serialize model parameters to add to file?
         ds_model = pipeline_to_xarray(model)
@@ -144,4 +151,4 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
         classified = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
 
 
-    return classified
+    return classified.to_dataset(name='classified_data')
