@@ -25,6 +25,7 @@ unit-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   script:
     - echo "Testing estimators..."
+    - conda install pytest -y
     - pytest test/check_esimtators.py
 
 lint-test-job:   # This job also runs in the test stage.
