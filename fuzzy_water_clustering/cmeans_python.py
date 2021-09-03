@@ -125,10 +125,20 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         # check input
         X = check_array(X)
 
+        # give model number of input features
+        # as attribute for sklearn compatibility
+        self.n_features_in_ = X.shape[1]
+        self.seed_ = self.random_state.randint(42)
+
         try:
             cntr, u, u0, d, jm, p, fpc = cmeans(
-                X.T, self.c, self.m, error=self.err, maxiter=self.maxiter,
-                metric=self.distance_metric, seed=self.random_state.randint(1000)
+                X.T, 
+                self.c,
+                self.m,
+                error=self.err,
+                maxiter=self.maxiter,
+                metric=self.distance_metric,
+                seed=self.seed_
             )
 
             # for consistency
@@ -153,8 +163,6 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         except TypeError:
             raise TypeError("argument must be a string.* number")
 
-        # sort the results in some way to have consistency....
-
         return self
 
     def predict(self, X, y=None, method='default', chi2_metric='mahalanobis'):
@@ -169,11 +177,13 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         if method == 'default':
 
             return cmeans_predict(
-                X.T, cntr_trained=self.cntr_,
+                X.T, 
+                cntr_trained=self.cntr_,
                 m=self.m,
                 error=self.err,
                 maxiter=self.maxiter,
-                metric=self.distance_metric
+                metric=self.distance_metric,
+                seed = self.seed_
             )[0]
 
         if method == 'chi2':
@@ -187,6 +197,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             memberships=np.zeros(X.shape[:-1]+(n_classes,))
             
             # for each class calc membership
+            # FIXME @anla : fails when only one feature exists..
             for n in range(n_classes):
                 dist = cdist(
                     X.reshape(-1,n_features),

@@ -36,7 +36,7 @@ cmeans.cntr_
 
 This package is available to download and install via pip with the following command:
 
-  `pip install fuzzy_clustering --no-deps --extra-index-url https://__token__:<personal_access_token>@gitlab.rsg.pml.ac.uk/api/v4/projects/340/packages/pypi/simple`
+  `pip install fuzzy_water --no-deps --index-url https://__token__:<personal_access_token>@gitlab.rsg.pml.ac.uk/api/v4/projects/340/packages/pypi/simple`
 
 where, <personal_access_token> is a personal access token with at least `read_api` scope.
 
