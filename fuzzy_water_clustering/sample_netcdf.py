@@ -1,9 +1,97 @@
 """
-spectral library generation
+Sampling functions for Xarray.DataArray objects
+
+Used for sampling training data from larger netcdf files
+
+AUTHOR
+    Angus Laurenson
+    Plymouth Marine Laboratory
+    anla@pml.ac.uk
+
 """
 
 import xarray as xr
 import re
+
+def random_coarsener(x, axis, **kwargs):
+    """collapse an array along the given axis,
+    use with xr.Dataset.coarsen() to randomly
+    keep 1 pixel from each window
+    
+    Provides a even coverage yet still random,
+    a compromise between random and stepping
+    that avoids row hammering.
+    """
+    
+    # for each axis of the array,
+    # randomly select an index value or not depending
+    # on whether its included in the axis arguement
+    
+    indices = []
+    for i in range(x.ndim):
+        if i in list(axis):
+            indices.append(choice(np.arange(x.shape[i])))
+        else:
+            indices.append(slice(None,None,None))
+    
+    # indexing works different for tuples and lists...
+    return x[tuple(indices)]
+    
+
+def stack_dataarray_drop_index(da:xr.DataArray, feature_dim:, **kwargs) -> xr.DataArray:
+    """Destroy all other dims except the given feature_dim,
+    return a 2D xr.DataArray with shape (observations, features)"""
+    
+    # put feature dim last, as per sklearn
+    da = da.transpose(...,feature_dim)
+    
+    # reshape unlabelled array
+    arr = da.data.reshape(-1,da[feature_dim].size)
+
+    # create a new data array of flattened values
+    da_out = xr.DataArray(
+        data=arr,
+        dims=('pixel',feature_dim),
+        coords={feature_dim:da[feature_dim]}
+        attrs = da.attrs
+    )
+    
+    # remove any pixel that contains a nan
+    da_out = da_out.dropna(dim='pixel')
+    
+    return da_out
+        
+
+def stack_dataset_drop_index(ds:xr.Dataset, **kwargs) -> xr.Dataset:
+    """take k random samples from a dataset,
+    assumes that data variables are the features,
+    flattens all coordinates and selects sample"""
+
+    # convert to dataarray
+    da = ds.to_array(dim='feature')
+    
+    # reuse function for dataarrays
+    da_stacked = stack_dataarray_drop_index(
+        da,
+        feature_dim='feature',
+        **kwargs
+    )
+    
+    # put back into dataset and return
+    return da_stacked.to_dataset(dim='variable')
+
+def random_sample_array(da:xr.DataArray, k=100, **kwargs):
+    """given a 2D array (xr.DataArray or dask.array),
+    it must have axes ordered (observations, features),
+    pick a random sample along the observations"""
+    
+    indices = np.arange(da.shape[0])
+    
+    random_indices = sorted(choices(indices, k=k))
+    
+    return da[random_indices]
+
+
 
 def sample_file(
     file,
@@ -103,6 +191,9 @@ def sample_file(
         dname='variables'
 
     arr = ds.to_array(dim=dname)
+    
+    if return_locations == True:
+        ds.stack(pixel=('x','y'))
 
     pixels = xr.DataArray(
         arr.data.reshape((arr[dname].size,-1)),
