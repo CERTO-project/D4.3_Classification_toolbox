@@ -26,13 +26,13 @@ class XarrayWrapper():
 
     USAGE :
         # create model
-        model = NetcdfWrapper(estimator, **kwargs)
+        wrapped = XarrayWrapper(estimator, **kwargs)
 
         # open netcdf with xarray
         ds = xr.open_dataset(netcdf_name)
 
         # fit model
-        model.fit(ds)
+        wrapped.fit(ds)
 
     """
 
