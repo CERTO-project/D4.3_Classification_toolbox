@@ -12,11 +12,15 @@ AUTHOR
 
 import xarray as xr
 import re
+from random import choice, choices
+import numpy as np
 
 def random_coarsener(x, axis, **kwargs):
     """collapse an array along the given axis,
     use with xr.Dataset.coarsen() to randomly
     keep 1 pixel from each window
+    
+    ds.coarsen({'x':10,'y':10}).reduce(random_coarsener)
     
     Provides a even coverage yet still random,
     a compromise between random and stepping
@@ -38,9 +42,12 @@ def random_coarsener(x, axis, **kwargs):
     return x[tuple(indices)]
     
 
-def stack_dataarray_drop_index(da:xr.DataArray, feature_dim:, **kwargs) -> xr.DataArray:
+def stack_dataarray_drop_index(da:xr.DataArray, feature_dim:str, **kwargs) -> xr.DataArray:
     """Destroy all other dims except the given feature_dim,
-    return a 2D xr.DataArray with shape (observations, features)"""
+    return a 2D xr.DataArray with shape (observations, features)
+    
+    Several times faster than using the stack() method
+    """
     
     # put feature dim last, as per sklearn
     da = da.transpose(...,feature_dim)
@@ -52,7 +59,7 @@ def stack_dataarray_drop_index(da:xr.DataArray, feature_dim:, **kwargs) -> xr.Da
     da_out = xr.DataArray(
         data=arr,
         dims=('pixel',feature_dim),
-        coords={feature_dim:da[feature_dim]}
+        coords={feature_dim:da[feature_dim]},
         attrs = da.attrs
     )
     
@@ -80,18 +87,50 @@ def stack_dataset_drop_index(ds:xr.Dataset, **kwargs) -> xr.Dataset:
     # put back into dataset and return
     return da_stacked.to_dataset(dim='variable')
 
-def random_sample_array(da:xr.DataArray, k=100, **kwargs):
+def random_sample_array(da:xr.DataArray, feature_dim:str, k=100, **kwargs):
     """given a 2D array (xr.DataArray or dask.array),
     it must have axes ordered (observations, features),
-    pick a random sample along the observations"""
+    pick a random sample along the observations
+    
+    da = xr.open_dataarray(<filename>):
+    
+    da = stack_dataarray_drop_index(da, feature_dim=<dim>)
+    
+    dist_coast = stack_dataarray_drop_index(
+        xr.open_dataarray(<filename>)
+    )
+    
+    random_sample_array(da, k=100, p=dist_coast)
+    
+    this could be sped up i think by randomly 
+    selecting indices in abstract then reshaping
+    them back into original shape....
+    
+    """
+#     assert da.ndim == 2
     
     indices = np.arange(da.shape[0])
     
-    random_indices = sorted(choices(indices, k=k))
+    random_indices = sorted(choices(indices, k=k, **kwargs))
     
     return da[random_indices]
 
+def systematic_sample_array(da:xr.DataArray, step_dict:dict, feature_dim) -> xr.DataArray:
+    """stide evenly across a xr.DataArray then
+    stack output to (pixel, feature) array
+    
+    stepping_sample_array(da, {'x':100,'y':10})"""
+    
+    # put the features at the end
+    da = da.transpose(...,feature_dim)
+    
+    # stride evenly
+    da = da.iloc[{key:slice(None,None,value) for (key,value) in step_dict}]
+    
+    # stack the array into (observations, features) array
+    da = stack_dataset_drop_index(da, feature_dim)
 
+    return da
 
 def sample_file(
     file,
