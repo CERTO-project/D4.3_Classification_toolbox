@@ -1,16 +1,26 @@
 """
 This file contains functions to apply trained models to new data and package them up with the model metadata.
 
-Author : Angus Laurenson, Plymouth Marine Laboratory
-Email : anla@pml.ac.uk
+ISSUES
+    GridSearchCV wants to split the data into test/train
+    these methods do not work when an xr.Dataset is passed.
+    Furthermore, I don't see how this can be done.
+
+AUTHOR
+    Angus Laurenson
+    Plymouth Marine Laboratory
+    anla@pml.ac.uk
 """
 
 import xarray as xr
 import dask.array as da
 import dask.dataframe as dd
 import numpy as np
+from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
+import sklearn
 
-class XarrayWrapper():
+class XarrayWrapper(BaseEstimator):
     """
     This wrapper is intended for scikit-learn estimators
     to enable them to be applied to xarray.datasets.
@@ -36,10 +46,23 @@ class XarrayWrapper():
 
     """
 
-    def __init__(self, model, **kwargs):
+    def __init__(self, model:sklearn.base.BaseEstimator):
         # create the model
-        self.model = model(**kwargs)
+        assert any((isinstance(model, BaseEstimator), isinstance(model, Pipeline))),\
+                 "Invalid model, please pass a relative of scikit-learn BaseEstimator or Pipeline"
+        
+        self.model = model
 
+    def fit_predict(self, X, y=None):
+        return self.fit(X).predict(X)
+
+    def score(self, X=None, y=None):
+        return self.score_
+
+    def set_params(self, **parameters):
+        for parameter, value in parameters.items():
+            setattr(self, parameter, value)
+        return self
 
     def flatten_data(self, dataset):
         # reshape the dataset for scikit-learn (n_observations, m_features)
@@ -154,13 +177,15 @@ class XarrayWrapper():
         # reapply the mask of land and cloud
         # FIXME: is np.atleast_3d causing problems for 2D data?
         ds_out['clustered'] = xr.Variable(
-            dims = list(new_dims) + ['optical_water_type'],
+            dims = list(new_dims) + ['cluster'],
             data = membership_data,
-            attrs= {}
+            attrs= {'units':'membership_values'}
         ).where(mask==0)
 
         # split the clustered variable into seperate data variables
-        ds_out['optical_water_type'] = [f'owt_{x}' for x in range(C)]
-        ds_out = ds_out['clustered'].to_dataset(dim='optical_water_type')
+        ds_out['cluster'] = [f'cluster_{x}' for x in range(C)]
+        ds_out = ds_out.attrs.update(self.get_params())
+        
+        ds_out = ds_out['clustered'].to_dataset(dim='cluster')
 
         return ds_out
