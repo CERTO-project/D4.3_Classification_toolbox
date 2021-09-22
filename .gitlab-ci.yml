@@ -50,15 +50,16 @@ build-job:       # This job runs in the build stage, which runs first.
     - echo "building sdist"
     - python setup.py sdist
     - pip install -r requirements.txt
+    - ls 
     - echo "installing from sdist"
-    - pip install dist/sdist
+    - python -m pip install ./dist/*
 
 
 estimator-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   script:
     - echo "Testing estimators..."
-    - python -m pytest test/check_esimtators.py
+    - python -m pytest test/test_estimators.py
 
 smoke-test-job:   # This job also runs in the test stage.
   stage: test    # It can run at the same time as unit-test-job (in parallel).
