@@ -55,7 +55,7 @@ estimator-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
   script:
     - echo "Testing estimators..."
-    - pytest test/check_esimtators.py
+    - python -m pytest test/check_esimtators.py
 
 smoke-test-job:   # This job also runs in the test stage.
   stage: test    # It can run at the same time as unit-test-job (in parallel).
