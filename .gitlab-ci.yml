@@ -43,14 +43,13 @@ setup-job:
   stage: setup
   script:
     - pip install pytest pylint
-    - pwd
-    - ls *
 
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
     - echo "building sdist"
     - python setup.py sdist
+    - ls *
     - echo "installing from sdist"
     - pip install build/sdist
 
