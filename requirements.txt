@@ -1,0 +1,4 @@
+xarray
+dask
+scikit-learn
+scikit-fuzzy
