@@ -52,7 +52,7 @@ build-job:       # This job runs in the build stage, which runs first.
     - pip install -r requirements.txt
     - ls 
     - echo "installing from sdist"
-    - python -m pip install ./dist/sdist
+    - python -m pip install ./dist/*
 
 
 estimator-test-job:   # This job runs in the test stage.
