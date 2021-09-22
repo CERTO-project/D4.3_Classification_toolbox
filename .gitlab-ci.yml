@@ -43,6 +43,7 @@ setup-job:
   stage: setup
   script:
     - pip install pytest pylint
+    - tree
 
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
