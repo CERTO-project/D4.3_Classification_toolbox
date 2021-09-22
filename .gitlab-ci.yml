@@ -47,8 +47,10 @@ setup-job:
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
-    - echo "installing from sdist"
+    - echo "building sdist"
     - python setup.py sdist
+    - echo "installing from sdist"
+    - pip install build/sdist
 
 
 estimator-test-job:   # This job runs in the test stage.
@@ -65,6 +67,7 @@ smoke-test-job:   # This job also runs in the test stage.
 
 lint-test-job:
   stage: test
+  allow_failure: true
   script:
     - pylint fuzzy_water_clustering
 
