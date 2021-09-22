@@ -49,9 +49,9 @@ build-job:       # This job runs in the build stage, which runs first.
   script:
     - echo "building sdist"
     - python setup.py sdist
-    - ls *
+    - pip install -r requirements.txt
     - echo "installing from sdist"
-    - pip install build/sdist
+    - pip install dist/sdist
 
 
 estimator-test-job:   # This job runs in the test stage.
