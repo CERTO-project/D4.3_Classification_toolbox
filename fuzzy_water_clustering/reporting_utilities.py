@@ -53,9 +53,15 @@ def prepare_dataset(ds):
 
     ds = ds.assign_coords(coords={'time':datetime.strptime(ds.attrs['isodate'][:10], "%Y-%m-%d")})
     ds = ds.expand_dims('time')
+    
+    ds.attrs['units'] = 'ratio'
+
+    for var in ds.data_vars:
+        ds[var].attrs['units'] = 'ratio'
+        
     return ds
 
-def get_sample(all_files, sample_size=10, step_size=10):
+def get_sample(all_files, sample_size=10, **kwargs):
     """take random sample of sample_size from list of all_files,
     evenly subsample with a given step_size and concatenate the
     results into a single dataset for training"""
@@ -65,13 +71,14 @@ def get_sample(all_files, sample_size=10, step_size=10):
     
     # open the files, correct the mistakes if needed
     try:
-        ds_list = [fwc.sample_file(f) for f in sample_files]
+        ds_list = [fwc.sample_file(f, **kwargs) for f in sample_files]
     except:
         ds_list = [
             fwc.sample_file(
                 prepare_dataset(
                     xr.open_dataset(file, decode_cf=False, mask_and_scale=True)
-                )
+                ),
+                **kwargs
             ) for file in sample_files
         ]
         
@@ -95,7 +102,7 @@ def plot_scores(df,model,scoring):
             legend=True,
 #             ylim=[-1.5,1.5],
             ylabel="score",
-            xlabel=r"# clusters c",
+            xlabel="# clusters c",
     ) for x in scoring.keys()]).opts(title=f"Pipeline = {list(model.named_steps.values())}", show_legend=True)
 
 def invert_transformations(model:Pipeline, Y):
@@ -164,7 +171,7 @@ def plot_centers(model, ds_train):
                 'y2':df_c[col]+df_std[col]
             }
         ).hvplot.area(
-            x='index',
+            x='wavelength',
             y='y',
             y2='y2',
             alpha=0.2,

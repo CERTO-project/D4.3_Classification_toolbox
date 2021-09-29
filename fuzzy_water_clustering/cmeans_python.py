@@ -173,9 +173,9 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         # check input is OK
         X = check_array(X)
-
+    
         if method == 'default':
-
+            
             return cmeans_predict(
                 X.T, 
                 cntr_trained=self.cntr_,
@@ -208,8 +208,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
                 memberships[:,n]=(1 - chi2.cdf(dist**2, n_features)).squeeze()
             return memberships.T
 
-    def fit_predict(self, X, y=None):
-        return self.fit(X).predict(X)
+    def fit_predict(self, X, y=None, **kwargs):
+        return self.fit(X).predict(X, **kwargs)
 
     def score(self, X=None, y=None):
         return self.fpc_

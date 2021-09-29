@@ -44,3 +44,5 @@ ESTIMATORS = [fwc.CmeansModel()]
 @estimator_checks.parametrize_with_checks(ESTIMATORS)
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
+
+# FIXME @anla : no test for CmeansModel.predict(method='chi2')
