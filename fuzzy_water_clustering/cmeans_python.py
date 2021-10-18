@@ -192,20 +192,25 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             # explicitly define number of features and classes
             n_classes, n_features = self.cntr_.shape
 
+            if n_features == 1:
+                vi = self.cov_
+            else:
+                vi = np.linalg.inv(self.cov_)
+
             # create an array of zeros to fill with memberships
             # shaped as X, but n_features is replaced with n_classes    
             memberships=np.zeros(X.shape[:-1]+(n_classes,))
             
             # for each class calc membership
             # FIXME @anla : fails when only one feature exists..
-            for n in range(n_classes):
-                dist = cdist(
-                    X.reshape(-1,n_features),
-                    self.cntr_[n,:].reshape(1, n_features),
-                    metric=chi2_metric,
-                    VI=np.linalg.inv(self.cov_[n,:,:])
-                )
-                memberships[:,n]=(1 - chi2.cdf(dist**2, n_features)).squeeze()
+
+            dist = cdist(
+                X.reshape(-1,n_features),
+                self.cntr_.reshape(n_classes, n_features),
+                metric=chi2_metric,
+                VI=vi
+            )
+            memberships=(1 - chi2.cdf(dist**2, self.n_features_in_)).squeeze()
             return memberships.T
 
     def fit_predict(self, X, y=None, **kwargs):
