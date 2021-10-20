@@ -90,7 +90,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
     def __init__(
             self,
-            c=5, m=2, toll=0.005, maxiter=1000,
+            c=5, m=2, tol=0.005, maxiter=1000,
             random_state=None,
             scoring_metric='fpc',
             distance_metric='euclidean'
@@ -98,7 +98,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         super(CmeansModel, self).__init__()
         self.n_clusters = c
         self.m = m
-        self.toll = toll
+        self.tol = tol
         self.maxiter = maxiter
         self.random_state = check_random_state(random_state)
         self.scoring_metric = scoring_metric
@@ -109,7 +109,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         return {
             'n_clusters':self.n_clusters,
             'm':self.m,
-            'err':self.toll,
+            'tol':self.tol,
             'maxiter':self.maxiter,
             'distance_metric':self.distance_metric
         }
@@ -195,7 +195,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
                 X.T, 
                 cluster_centers_trained=self.n_clustersntr_,
                 m=self.m,
-                error=self.toll,
+                error=self.tol,
                 maxiter=self.maxiter,
                 metric=self.distance_metric,
                 seed = self.seed_
