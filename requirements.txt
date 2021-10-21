@@ -1,3 +1,4 @@
+h5py
 xarray
 netcdf4
 dask
