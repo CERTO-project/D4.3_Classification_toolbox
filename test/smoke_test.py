@@ -39,14 +39,14 @@ test_ds.to_netcdf(
 )
 
 # sample file
-training_data = fwc.sample_file('coffee.nc', step_size=10, variables='none')
+training_data = fwc.sample_file('tutorial.eraint_uvz.nc', step_size=2, variables='none')
 
 # create CmeansModel instance and fit
 cmeans = fwc.CmeansModel(c=3,m=1.5)
 cmeans.fit(training_data)
 
 # apply model to file using predict_file
-ds_classified = fwc.predict_file('coffee.nc', cmeans, variables='all', store_model=False)
+ds_classified = fwc.predict_file('tutorial.eraint_uvz.nc', cmeans, variables='all', store_model=False)
 
 # write to file
 ds_classified.to_netcdf(
