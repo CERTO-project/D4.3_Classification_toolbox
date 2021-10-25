@@ -90,13 +90,13 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
     def __init__(
             self,
-            c=5, m=2, tol=0.005, maxiter=1000,
+            n_clusters=5, m=2, tol=0.005, maxiter=1000,
             random_state=None,
             scoring_metric='fpc',
             distance_metric='euclidean'
         ):
         super(CmeansModel, self).__init__()
-        self.n_clusters = c
+        self.n_clusters = n_clusters
         self.m = m
         self.tol = tol
         self.maxiter = maxiter
@@ -193,7 +193,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             
             return cmeans_predict(
                 X.T, 
-                cluster_centers_trained=self.n_clustersntr_,
+                cluster_centers_trained=self.cluster_centers_,
                 m=self.m,
                 error=self.tol,
                 maxiter=self.maxiter,
