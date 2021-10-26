@@ -65,10 +65,10 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     try:
         # for single estimator
         """WARNING what if the number of clusters isn't called 'c' ?"""
-        C = model.get_params()['c']
+        C = model.get_params()['n_clusters']
     except:
         # for pipelines, clustering should come last?
-        C = model.steps[-1][-1].get_params()['c']
+        C = model.steps[-1][-1].get_params()['n_clusters']
 
     if type(variables).__name__ == "function":
         variables = list(
