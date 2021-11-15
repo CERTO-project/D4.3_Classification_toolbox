@@ -57,6 +57,7 @@ build-job:       # This job runs in the build stage, which runs first.
 
 estimator-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.
+  allow_failure: true
   script:
     - echo "Testing estimators..."
     - python -m pytest test/test_estimators.py
