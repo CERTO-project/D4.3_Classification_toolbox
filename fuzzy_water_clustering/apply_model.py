@@ -126,7 +126,7 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
         dtype=float,
     ).compute()
 
-    classified = ds[:C,].copy()
+    classified = xr.concat([ds[:1]]*C, dim=dname)
 
     classified.data = mem.reshape((C,*ds.shape[1:]))
 

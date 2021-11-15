@@ -85,7 +85,7 @@ def stack_dataset_drop_index(ds:xr.Dataset, **kwargs) -> xr.Dataset:
     )
     
     # put back into dataset and return
-    return da_stacked.to_dataset(dim='variable')
+    return da_stacked.to_dataset(dim='feature')
 
 def random_sample_array(da:xr.DataArray, feature_dim:str, k=100, **kwargs):
     """given a 2D array (xr.DataArray or dask.array),
@@ -107,7 +107,7 @@ def random_sample_array(da:xr.DataArray, feature_dim:str, k=100, **kwargs):
     them back into original shape....
     
     """
-#     assert da.ndim == 2
+    assert da.ndim == 2
     
     indices = np.arange(da.shape[0])
     
@@ -137,9 +137,6 @@ def sample_file(
     step_size=100,
     variables=lambda x : "Rrs" in x,
     mask=None,
-    sensor=None,
-    time_bounds=None,
-    max_pixels=None,
 ):
     """Given a filename,
     return a 2D array with dimensions (bands, pixels)
@@ -171,7 +168,6 @@ def sample_file(
 
     else:
         ds = file
-
 
     # accept different variable arugment types
 
@@ -230,9 +226,6 @@ def sample_file(
         dname='variables'
 
     arr = ds.to_array(dim=dname)
-    
-    if return_locations == True:
-        ds.stack(pixel=('x','y'))
 
     pixels = xr.DataArray(
         arr.data.reshape((arr[dname].size,-1)),

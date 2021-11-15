@@ -181,10 +181,10 @@ class XarrayWrapper(BaseEstimator):
             data = membership_data,
             attrs= {'units':'membership_values'}
         ).where(mask==0)
-
+        
         # split the clustered variable into seperate data variables
         ds_out['cluster'] = [f'cluster_{x}' for x in range(C)]
-        ds_out = ds_out.attrs.update(self.get_params())
+        ds_out.attrs.update(self.get_params())
         
         ds_out = ds_out['clustered'].to_dataset(dim='cluster')
 
