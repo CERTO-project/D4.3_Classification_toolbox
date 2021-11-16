@@ -39,7 +39,7 @@ test_ds.to_netcdf(
 )
 
 # sample file
-training_data = fwc.sample_file('tutorial.eraint_uvz.nc', step_size=10, variables='none')
+training_data = fwc.sample_file('tutorial.eraint_uvz.nc', step_size=2, variables='none')
 
 # create CmeansModel instance and fit
 cmeans = fwc.CmeansModel(n_clusters=3,m=1.5)
