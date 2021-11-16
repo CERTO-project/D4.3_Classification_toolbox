@@ -37,12 +37,12 @@ stages:          # List of stages for jobs, and their order of execution
   - setup
   - build
   - test
-#   - deploy
+  - publish
 
 setup-job:
   stage: setup
   script:
-    - pip install pytest pylint twine
+    - pip install pytest pylint
 
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
@@ -74,9 +74,11 @@ lint-test-job:
   script:
     - pylint fuzzy_water_clustering
 
-# deploy-job:      # This job runs in the deploy stage.
-#   stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
-#   script:
+publish-job:      # This job runs in the deploy stage.
+  stage: publish  # It only runs when *both* jobs in the test stage complete successfully.
+  script:
+    - pip install twine
+    - python setup.py sdist bdist_wheel
     - TWINE_PASSWORD=${CI_JOB_TOKEN} TWINE_USERNAME=gitlab-ci-token python -m twine upload --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
 
 
