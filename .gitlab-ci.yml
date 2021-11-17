@@ -76,6 +76,9 @@ lint-test-job:
 
 publish-job:      # This job runs in the deploy stage.
   stage: publish  # It only runs when *both* jobs in the test stage complete successfully.
+  rules: # only publish new package on merge on master (default) branch
+    - if: $CI_COMMIT_BRANCH == master
+
   script:
     - pip install twine
     - python setup.py sdist bdist_wheel
