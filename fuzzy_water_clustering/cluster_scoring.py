@@ -23,7 +23,7 @@ def xie_beni(Estimator, X, y=None):
         by default maximizes scores """
 
     u = Estimator.predict(X)
-    v = Estimator["cmeansmodel"].cntr_
+    v = Estimator["cmeansmodel"].cluster_centers_
     m = Estimator["cmeansmodel"].m
 
     n = X.shape[0]
