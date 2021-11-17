@@ -128,7 +128,7 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
 
     classified = xr.concat([ds[:1]]*C, dim=dname)
 
-    classified.data = mem.reshape((C,*ds.shape[1:]))
+    classified.data = mem.T.reshape((C,*ds.shape[1:]))
 
     # classified = classified.where(ds[:C,].isnull() == False)
 
