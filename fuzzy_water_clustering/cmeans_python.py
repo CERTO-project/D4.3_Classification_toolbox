@@ -16,6 +16,7 @@ of the features/attributes froms cmeans() from scikit-fuzzy
 '''
 
 # cmeans algorithms
+from numpy.lib.twodim_base import diagflat
 from skfuzzy.cluster import cmeans, cmeans_predict
 
 # for data handling
@@ -26,10 +27,65 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_random_
 
 # scikit-learn base classes
 from sklearn.base import BaseEstimator, ClusterMixin
+from sklearn.utils import check_array
 
 # distances
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
+
+def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean') -> np.array:
+    """Custom function that assigns unnormalised fuzzy membership 
+    values according to the chi2.sf distribution function 
+    
+    args:
+
+    x : 2d array of (n_observations, n_features)
+    VI : 3d array of shape (n_clusters, n_features, n_features), 
+        stacked inverse covariance matrices from each cluster
+
+    kwargs:
+
+    degrees_freedom : int
+        Defaults to -1, which resorts to n_features
+        number of degrees of freedom passed to chi2.sf as the df kwarg
+        Best practice is to perform PCA on the training data and then
+        set degrees_freedom to the number of components that caputres
+        99% of the data. In ocean colour that number is usually 3 or 4.
+        
+    metric : str
+        what metric space to measure distance in. Euclidean is default,
+        mahalanobis can also be used"""
+
+    # explicitly define number of features and classes
+    n_classes, n_features = cluster_centers_.shape
+
+    # check the data
+    x = check_array(x)
+
+    # assert the number of features matches
+    assert x.shape[1] == n_features, "number of features inconsistent between clusters and x"
+
+    # create an array of zeros to fill with memberships
+    # shaped as x, but n_features is replaced with n_classes    
+    memberships=np.zeros(x.shape[:-1]+(n_classes,))
+    
+    # for each class calc distance
+    dist = cdist(
+        x.reshape(-1,n_features),
+        cluster_centers_.reshape(n_classes, n_features),
+        metric=metric,
+        VI=VI
+    )
+    
+    # default is to use the number of features
+    if degrees_freedom == -1:
+        degrees_freedom = n_features
+
+    # calculate the membership
+    memberships=chi2.sf(dist**2, degrees_freedom).squeeze()
+    
+    return memberships.T
+
 
 class CmeansModel(BaseEstimator, ClusterMixin):
     """A c-means clustering estimator that is compatible with scikit-learn.
@@ -51,10 +107,10 @@ class CmeansModel(BaseEstimator, ClusterMixin):
     )
 
     # determine clusters
-    cmeans.fit(X)
+    cmeans.fit(x)
 
     # estimate memberships
-    lables = cmeans.predict(X)
+    lables = cmeans.predict(x)
 
     # score clustering
     score = cmeans.score()
@@ -70,12 +126,12 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
     # METHODS #
 
-    fit(X) -> self
-    predict(X) -> array
-    fit_predict(X) -> array
+    fit(x) -> self
+    predict(x) -> array
+    fit_predict(x) -> array
     score() -> float
 
-    where X is an array of size (N,M),
+    where x is an array of size (N,M),
     N is the number of observations,
     M is the number of of features.
 
@@ -125,34 +181,34 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             setattr(self, parameter, value)
         return self
 
-    def get_covariance(self, X):
+    def get_covariance(self, x):
         # compute covariance of hardened clusters
         return np.stack(
-                [np.cov(X[self.labels_==i].T) for i in range(self.n_clusters)]
+                [np.cov(x[self.labels_==i].T) for i in range(self.n_clusters)]
             )
     
-    def get_weighted_covariance(self, X):
+    def get_weighted_covariance(self, x):
         # compute covaraince weighted by cluster membership
         # WARNING @anla : this causes cumulative membership 
         # to bloat when the number of clusters is large
         return np.stack(
-                [np.cov(X.T, aweights=x) for x in self.u_]
+                [np.cov(x.T, aweights=x) for x in self.u_]
             )
 
 
-    def fit(self, X, y=None):
+    def fit(self, x, y=None):
         ''''\n    Fuzzy c-means clustering algorithm [1].\n\n    Parameters\n    ----------\n    data : 2d array, size (N, S)\n        Data to be clustered.  N is the number of data sets; S is the number\n        of features within each sample vector.\n    c : int\n        Desired number of clusters or classes.\n    m : float\n        Array exponentiation applied to the membership function u_old at each\n        iteration, where U_new = u_old ** m.\n    error : float\n        Stopping criterion; stop early if the norm of (u[p] - u[p-1]) < error.\n    maxiter : int\n        Maximum number of iterations allowed.\n    metric: string\n        By default is set to euclidean. Passes any option accepted by\n        ``scipy.spatial.distance.cdist``.\n    init : 2d array, size (S, N)\n        Initial fuzzy c-partitioned matrix. If none provided, algorithm is\n        randomly initialized.\n    seed : int\n        If provided, sets random seed of init. No effect if init is\n        provided. Mainly for debug/testing purposes.\n\n    Returns\n    -------\n    cntr : 2d array, size (S, c)\n        Cluster centers.  Data for each center along each feature provided\n        for every cluster (of the `c` requested clusters).\n    u : 2d array, (S, N)\n        Final fuzzy c-partitioned matrix.\n    u0 : 2d array, (S, N)\n        Initial guess at fuzzy c-partitioned matrix (either provided init or\n        random guess used if init was not provided).\n    d : 2d array, (S, N)\n        Final Euclidian distance matrix.\n    jm : 1d array, length P\n        Objective function history.\n    p : int\n        Number of iterations run.\n    fpc : float\n        Final fuzzy partition coefficient.\n\n\n    Notes\n    -----\n    The algorithm implemented is from Ross et al. [1]_.\n\n    Fuzzy C-Means has a known problem with high dimensionality datasets, where\n    the majority of cluster centers are pulled into the overall center of\n    gravity. If you are clustering data with very high dimensionality and\n    encounter this issue, another clustering method may be required. For more\n    information and the theory behind this, see Winkler et al. [2]_.\n\n    References\n    ----------\n    .. [1] Ross, Timothy J. Fuzzy Logic With Engineering Applications, 3rd ed.\n           Wiley. 2010. ISBN 978-0-470-74376-8 pp 352-353, eq 10.28 - 10.35.\n\n    .. [2] Winkler, R., Klawonn, F., & Kruse, R. Fuzzy c-means in high\n           dimensional spaces. 2012. Contemporary Theory and Pragmatic\n           Approaches in Fuzzy Computing Utilization, 1.\n    '''
 
         # check input
-        X = check_array(X)
+        x = check_array(x)
 
         # give model number of input features
         # as attribute for sklearn compatibility
-        self.set_params(n_features_in_=X.shape[1])
+        self.set_params(n_features_in_=x.shape[1])
 
         # try:
         cntr, u, u0, d, jm, p, fpc = cmeans(
-            X.T, 
+            x.T, 
             self.n_clusters,
             self.m,
             error=self.tol,
@@ -177,14 +233,14 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         # calculate covariance from training data
         # required for the chi2 method of predict
-        self.cov_ = self.get_covariance(X)
+        self.cov_ = self.get_covariance(x)
 
         # except TypeError:
         #     raise TypeError("argument must be a string.* number")
 
         return self
 
-    def predict(self, X, y=None, method='default', chi2_metric='mahalanobis'):
+    def predict(self, x, y=None, method='default', chi2_metric='mahalanobis'):
         '''Prediction of new data in given a trained fuzzy c-means framework [1].
         Parameters
 
@@ -197,12 +253,11 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         check_is_fitted(self, "cluster_centers_")
 
         # check input is OK
-        X = check_array(X)
+        x = check_array(x)
     
         if method == 'default':
-            
             return cmeans_predict(
-                X.T, 
+                x.T, 
                 cntr_trained=self.cluster_centers_,
                 m=self.m,
                 error=self.tol,
@@ -212,34 +267,16 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             )[0]
 
         if method == 'chi2':
-            """predict membership from covariance and mean of class"""
-
-            # explicitly define number of features and classes
-            n_classes, n_features = self.n_clusters, self.n_features_in_
-
-            if n_features == 1:
+            # compute the inverse covariance matrix
+            if self.n_features_in_ == 1:
                 vi = self.cov_
             else:
                 vi = np.linalg.inv(self.cov_)
 
-            # create an array of zeros to fill with memberships
-            # shaped as X, but n_features is replaced with n_classes    
-            memberships=np.zeros(X.shape[:-1]+(n_classes,))
-            
-            # for each class calc membership
-            # FIXME @anla : fails when only one feature exists..
+            return _chi2_predict(x, self.cluster_centers_, vi, metric=self.distance_metric)
 
-            dist = cdist(
-                X.reshape(-1,n_features),
-                self.cluster_centers_.reshape(n_classes, n_features),
-                metric=chi2_metric,
-                VI=vi
-            )
-            memberships=(1 - chi2.cdf(dist**2, self.n_features_in_)).squeeze()
-            return memberships.T
+    def fit_predict(self, x, y=None, **kwargs):
+        return self.fit(x).predict(x, **kwargs)
 
-    def fit_predict(self, X, y=None, **kwargs):
-        return self.fit(X).predict(X, **kwargs)
-
-    def score(self, X=None, y=None):
+    def score(self, x=None, y=None):
         return self.fpc_
