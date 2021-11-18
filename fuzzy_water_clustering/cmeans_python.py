@@ -28,10 +28,27 @@ from sklearn.utils.validation import check_array, check_is_fitted, check_random_
 # scikit-learn base classes
 from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.utils import check_array
+from sklearn.decomposition import PCA
 
 # distances
 from scipy.spatial.distance import cdist
 from scipy.stats import chi2
+
+def get_degrees_freedom(x, threshold=0.99)->int:
+    """Get the number of principal components that explain
+    99% of the variance of a given dataset"""
+    pca = PCA()
+    PCA.fit(x)
+
+    explained_variance_sum = 0
+    degrees_freedom = 0
+    while explained_variance_sum <= 0.99:
+        explained_variance_sum += pca.explained_variance_ratio_
+        degrees_freedom += 1
+
+    return degrees_freedom
+
+
 
 def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean') -> np.array:
     """Custom function that assigns unnormalised fuzzy membership 
@@ -80,6 +97,10 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
     # default is to use the number of features
     if degrees_freedom == -1:
         degrees_freedom = n_features
+    
+    # this is post-haste, should be done on the training data
+    if degrees_freedom == 'auto':
+        get_degrees_freedom(x)
 
     # calculate the membership
     memberships=chi2.sf(dist**2, degrees_freedom).squeeze()
@@ -240,7 +261,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         return self
 
-    def predict(self, x, y=None, method='default', chi2_metric='mahalanobis'):
+    def predict(self, x, y=None, method='default', chi2_metric='mahalanobis', **kwargs):
         '''Prediction of new data in given a trained fuzzy c-means framework [1].
         Parameters
 
@@ -273,7 +294,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             else:
                 vi = np.linalg.inv(self.cov_)
 
-            return _chi2_predict(x, self.cluster_centers_, vi, metric=self.distance_metric)
+            return _chi2_predict(x, self.cluster_centers_, vi,
+                metric=self.distance_metric, degrees_freedom='auto')
 
     def fit_predict(self, x, y=None, **kwargs):
         return self.fit(x).predict(x, **kwargs)
