@@ -128,7 +128,7 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
 
     classified = xr.concat([ds[:1]]*C, dim=dname)
 
-    classified.data = mem.reshape((C,*ds.shape[1:]))
+    classified.data = mem.T.reshape((C,*ds.shape[1:]))
 
     # classified = classified.where(ds[:C,].isnull() == False)
 
@@ -136,19 +136,18 @@ def predict_file(file, model, variables=lambda x:("Rrs_" in x)&(len(x) == 7), st
     # classified = classified.sortby('latitude')
 
     # name the optical water type dimension "owt"
-    classified.rename({dname,'owt'})
-
+    classified=classified.rename({dname:'cluster'})
+    
     # apply mask from original data to classified data
     # also adds time coords + wavelength. Drop the latter
     classified = classified.where(mask)
-
+    classified = classified.to_dataset(name='classified_data')
     # optionally store model parameters inside the netcdf
     if store_model == True:
         # serialize model parameters to add to file?
         ds_model = pipeline_to_xarray(model)
 
         # merge the dataset of classified data with the one for model parameters
-        classified = xr.merge((classified.to_dataset(name='classified_data'),ds_model))
+        classified = xr.merge((classified,ds_model))
 
-
-    return classified.to_dataset(name='classified_data')
+    return classified
