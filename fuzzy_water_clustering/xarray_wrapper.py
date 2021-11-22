@@ -118,7 +118,7 @@ class XarrayWrapper(BaseEstimator):
         x = x.reshape(-1,chunk_shape[-1])
 
         # apply model
-        y = self.model.predict(x, **kwargs).T#method=method, chi2_metric=chi2_metric).T
+        y = self.model.predict(x, **kwargs).T
 
         # re-reshape chunk
         return y.reshape(chunk_shape[:-1]+(self.n_features_out,))
