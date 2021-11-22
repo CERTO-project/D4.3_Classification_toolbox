@@ -171,7 +171,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
     def __init__(
             self,
-            n_clusters=5, m=2, tol=1e-9, maxiter=1000,
+            n_clusters=5, m=2, tol=1e-10, maxiter=1000,
             random_state=None,
             distance_metric='euclidean',
             predict_method='default'
