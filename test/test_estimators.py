@@ -39,7 +39,7 @@ import fuzzy_water_clustering as fwc
 from sklearn.utils import estimator_checks
 
 # list of estimators to check
-ESTIMATORS = [fwc.CmeansModel()]
+ESTIMATORS = [fwc.CmeansModel(), fwc.CmeansModel(predict_method='chi2')]
 
 @estimator_checks.parametrize_with_checks(ESTIMATORS)
 def test_sklearn_compatible_estimator(estimator, check):
