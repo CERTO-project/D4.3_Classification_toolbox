@@ -14,6 +14,24 @@ import sklearn
 from sklearn.metrics import pairwise_distances, make_scorer
 from sklearn.metrics.cluster import calinski_harabasz_score, davies_bouldin_score, silhouette_samples, silhouette_score
 import numpy as np
+from sklearn.utils.validation import check_array
+
+def cumulative_membership_score(estimator, x, y=None):
+    """custom scoring function for unnormalised
+    and unlabelled fuzzy clustering results.
+
+    Returns score equal to mean of square of difference
+    between cumulative memberships and unity.
+    """
+    try:
+        cumulative_memberships = np.sum(estimator.labels_,axis=1)
+    except IndexError:
+        print("labels_ attribute must be a 2D array")
+
+    return -np.mean((cumulative_memberships-1)**2)
+
+
+
 
 def xie_beni(Estimator, X, y=None):
     """ Xie-Beni scoring function
