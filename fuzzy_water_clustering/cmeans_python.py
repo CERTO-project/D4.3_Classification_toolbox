@@ -48,7 +48,7 @@ def get_degrees_freedom(x, threshold=0.99)->int:
 
     return int(degrees_freedom.flat[0])
 
-def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean') -> np.array:
+def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean', **kwargs) -> np.array:
     """Custom function that assigns unnormalised fuzzy membership 
     values according to the chi2.sf distribution function 
     
@@ -98,11 +98,14 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
         degrees_freedom = n_features
     
     # this is post-haste, should be done on the training data
-    if degrees_freedom == 'auto':
+    elif degrees_freedom == 'auto':
         degrees_freedom = get_degrees_freedom(x)
 
+    else:
+        degrees_freedom = int(degrees_freedom)
+
     # calculate the membership
-    memberships=(1-chi2.cdf(dist**2, df=degrees_freedom)).squeeze()
+    memberships=chi2.sf(dist**2, df=degrees_freedom).squeeze()
     
     return memberships.T
 
@@ -294,8 +297,10 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             else:
                 vi = np.linalg.inv(self.cov_)
 
+            degrees_freedom = kwargs.get('degrees_freedom','auto')
+
             return _chi2_predict(x, self.cluster_centers_, vi, 
-                degrees_freedom=kwargs.get('degrees_freedom'),
+                degrees_freedom=degrees_freedom,
                 metric=self.distance_metric)
 
     def fit_predict(self, x, y=None, **kwargs):
