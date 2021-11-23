@@ -30,8 +30,12 @@ import os
 # # # # CREATE TEST DATA USING SKIMAGE DATASETS # # # # #
 
 # load a dataset from the tutorial
-test_ds = xr.tutorial.open_dataset('eraint_uvz', chunks='auto')
-
+try:
+    test_ds = xr.tutorial.open_dataset('eraint_uvz', chunks='auto')
+except:
+    print("error downloading the example dataset")
+    exit
+    
 # write to file
 test_ds.to_netcdf(
     'tutorial.eraint_uvz.nc',
