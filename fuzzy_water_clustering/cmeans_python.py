@@ -81,6 +81,12 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
 
     # assert the number of features matches
     assert x.shape[1] == n_features, "number of features inconsistent between clusters and x"
+    
+    if degrees_freedom == -1:
+        degrees_freedom = n_features
+
+    # assert degrees freedom is a natural number
+    assert isinstance(degrees_freedom, int) & (degrees_freedom > 0), "degrees of freedom should be a positive integer"
 
     # create an array of zeros to fill with memberships
     # shaped as x, but n_features is replaced with n_classes    
@@ -94,13 +100,6 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
         metric=metric,
         VI=VI
     )
-    
-    # default is to use the number of features
-    if degrees_freedom == -1:
-        degrees_freedom = n_features
-
-    else:
-        degrees_freedom = int(degrees_freedom)
 
     # calculate the membership
     memberships=chi2.sf(dist**2, df=degrees_freedom).squeeze()
@@ -262,7 +261,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         return self
 
-    def predict(self, x, y=None, method='default', chi2_metric='euclidean', **kwargs):
+    def predict(self, x, y=None, method='default', degrees_freedom=-1):
         '''Prediction of new data in given a trained fuzzy c-means framework [1].
         Parameters
 
@@ -299,8 +298,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
                 x,
                 self.cluster_centers_,
                 vi, 
-                degrees_freedom=kwargs.get('degrees_freedom',-1),
-                metric=self.distance_metric
+                metric=self.distance_metric,
+                degrees_freedom = degrees_freedom
             )
 
     def fit_predict(self, x, y=None, **kwargs):
