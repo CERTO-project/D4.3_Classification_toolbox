@@ -102,7 +102,7 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
         degrees_freedom = get_degrees_freedom(x)
 
     # calculate the membership
-    memberships=chi2.sf(dist**2, df=degrees_freedom).squeeze()
+    memberships=(1-chi2.cdf(dist**2, df=degrees_freedom)).squeeze()
     
     return memberships.T
 
