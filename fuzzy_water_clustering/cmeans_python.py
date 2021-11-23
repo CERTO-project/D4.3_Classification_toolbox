@@ -294,8 +294,9 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             else:
                 vi = np.linalg.inv(self.cov_)
 
-            return _chi2_predict(x, self.cluster_centers_, vi,
-                metric=self.distance_metric, **kwargs)
+            return _chi2_predict(x, self.cluster_centers_, vi, 
+                degrees_freedom=kwargs.get('degrees_freedom'),
+                metric=self.distance_metric)
 
     def fit_predict(self, x, y=None, **kwargs):
         return self.fit(x).predict(x, **kwargs)
