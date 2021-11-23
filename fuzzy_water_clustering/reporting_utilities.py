@@ -22,9 +22,7 @@ DESCRIPTION:
             y = RRS (ratio)
         
         geographic plot of cluster memberhips and dominant cluster
-    
 """
-
 import xarray as xr
 import hvplot.xarray
 import fuzzy_water_clustering as fwc
@@ -34,7 +32,6 @@ import numpy as np
 from functools import reduce
 from random import choices
 from datetime import datetime
-
 from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 

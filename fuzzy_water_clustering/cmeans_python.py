@@ -40,7 +40,7 @@ def get_degrees_freedom(x, threshold=0.99)->int:
     the default is (default 99%) and that is usually 3 or 4
     for ocean colour imagery"""
     pca = PCA()
-    pca.fit(x)
+    pca.fit(x[np.isnan(x) == False])
 
     degrees_freedom = np.argwhere(
         np.cumsum(pca.explained_variance_ratio_)>=0.99
@@ -48,7 +48,7 @@ def get_degrees_freedom(x, threshold=0.99)->int:
 
     return int(degrees_freedom.flat[0])
 
-def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean', **kwargs) -> np.array:
+def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean') -> np.array:
     """Custom function that assigns unnormalised fuzzy membership 
     values according to the chi2.sf distribution function 
     
@@ -58,8 +58,7 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
     VI : 3d array of shape (n_clusters, n_features, n_features), 
         stacked inverse covariance matrices from each cluster
 
-    kwargs:
-
+    Optional arguments
     degrees_freedom : int
         Defaults to -1, which resorts to n_features
         number of degrees of freedom passed to chi2.sf as the df kwarg
@@ -76,6 +75,9 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
 
     # check the data
     x = check_array(x)
+    
+    # reshape the data
+    x = x.reshape(-1,n_features)
 
     # assert the number of features matches
     assert x.shape[1] == n_features, "number of features inconsistent between clusters and x"
@@ -87,7 +89,7 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
     # for each class calc distance
     # FIXME @anla : incompatible arguments
     dist = cdist(
-        x.reshape(-1,n_features),
+        x,
         cluster_centers_,
         metric=metric,
         VI=VI
@@ -96,10 +98,6 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
     # default is to use the number of features
     if degrees_freedom == -1:
         degrees_freedom = n_features
-    
-    # this is post-haste, should be done on the training data
-    elif degrees_freedom == 'auto':
-        degrees_freedom = get_degrees_freedom(x)
 
     else:
         degrees_freedom = int(degrees_freedom)
@@ -297,11 +295,13 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             else:
                 vi = np.linalg.inv(self.cov_)
 
-            degrees_freedom = kwargs.get('degrees_freedom','auto')
-
-            return _chi2_predict(x, self.cluster_centers_, vi, 
-                degrees_freedom=degrees_freedom,
-                metric=self.distance_metric)
+            return _chi2_predict(
+                x,
+                self.cluster_centers_,
+                vi, 
+                degrees_freedom=kwargs.get('degrees_freedom',-1),
+                metric=self.distance_metric
+            )
 
     def fit_predict(self, x, y=None, **kwargs):
         return self.fit(x).predict(x, **kwargs)
