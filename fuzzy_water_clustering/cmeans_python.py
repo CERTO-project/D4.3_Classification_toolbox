@@ -174,7 +174,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             n_clusters=5, m=2, tol=1e-10, maxiter=1000,
             random_state=None,
             distance_metric='euclidean',
-            predict_method='default'
+            predict_method='default',
+            degrees_freedom=-1
         ):
         super(CmeansModel, self).__init__()
         self.n_clusters = n_clusters
@@ -184,6 +185,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
         self.random_state = check_random_state(random_state)
         self.distance_metric = distance_metric
         self.predict_method = predict_method
+        self.degrees_freedom = degrees_freedom
         
     def get_params(self, deep=False):
         # required for scikit-learn interoperability
@@ -193,7 +195,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             'tol':self.tol,
             'maxiter':self.maxiter,
             'distance_metric':self.distance_metric,
-            'predict_method':self.predict_method
+            'predict_method':self.predict_method,
+            'degrees_freedom':self.degrees_freedom
         }
 
     def set_params(self, **parameters):
@@ -261,7 +264,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         return self
 
-    def predict(self, x, y=None, method='default', degrees_freedom=-1):
+    def predict(self, x, y=None, method='default', degrees_freedom=None):
         '''Prediction of new data in given a trained fuzzy c-means framework [1].
         Parameters
 
@@ -288,18 +291,22 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             )[0]
 
         elif (method == 'chi2') | (self.predict_method == 'chi2'):
+
             # compute the inverse covariance matrix
             if self.n_features_in_ == 1:
                 vi = self.cov_
             else:
                 vi = np.linalg.inv(self.cov_)
 
+            if degrees_freedom:
+                self.set_params(degrees_freedom=degrees_freedom)
+
             return _chi2_predict(
                 x,
                 self.cluster_centers_,
                 vi, 
                 metric=self.distance_metric,
-                degrees_freedom = degrees_freedom
+                degrees_freedom = self.degrees_freedom
             )
 
     def fit_predict(self, x, y=None, **kwargs):

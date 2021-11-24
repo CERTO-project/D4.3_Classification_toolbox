@@ -35,7 +35,7 @@ try:
 except:
     print("error downloading the example dataset")
     exit
-    
+
 # write to file
 test_ds.to_netcdf(
     'tutorial.eraint_uvz.nc',
@@ -65,10 +65,14 @@ wrapped = fwc.XarrayWrapper(fwc.CmeansModel())
 wrapped.fit(test_ds)
 
 # predict xarray.Dataset
-test_pred_chi2 = wrapped.predict(test_ds, method='chi2')
+test_pred_chi2_2 = wrapped.predict(test_ds, method='chi2', degrees_freedom=3)
+
+test_pred_chi2_3 = wrapped.predict(test_ds, method='chi2', degrees_freedom=2)
+
+assert all(test_pred_chi2_2 != test_pred_chi2_3)
 
 # write to netcdf
-test_pred_chi2.to_netcdf(
+test_pred_chi2_2.to_netcdf(
     "test_chi2.nc",
-    encoding={x:{'zlib':True,'complevel':4} for x in test_pred_chi2.data_vars}
+    encoding={x:{'zlib':True,'complevel':4} for x in test_pred_chi2_2.data_vars}
 )
