@@ -16,22 +16,21 @@ from sklearn.metrics.cluster import calinski_harabasz_score, davies_bouldin_scor
 import numpy as np
 from sklearn.utils.validation import check_array
 
-def cumulative_membership_score(estimator, x, y=None):
-    """custom scoring function for unnormalised
-    and unlabelled fuzzy clustering results.
+def diff_to_default(estimator, x, y=None):
+    """scoring function for fuzzy clustering
+    
+    returns:
+     negative square root of the mean of the 
+     squared difference between default and chi2 predictions
+    
+    Higher value is better, scores useful to choose 
+    the degrees_freedom parameter for the chi2 method"""
 
-    Returns score equal to mean of square of difference
-    between cumulative memberships and unity.
-    """
-    try:
-        cumulative_memberships = np.sum(estimator.labels_,axis=1)
-    except IndexError:
-        print("labels_ attribute must be a 2D array")
-
-    return -np.mean((cumulative_memberships-1)**2)
-
-
-
+    return -np.sqrt(
+            np.mean((
+                estimator.predict(x, method='default') - estimator.predict(x, method='chi2')
+            )**2)
+        )
 
 def xie_beni(Estimator, X, y=None):
     """ Xie-Beni scoring function
