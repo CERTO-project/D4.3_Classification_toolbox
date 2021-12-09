@@ -48,7 +48,7 @@ def get_degrees_freedom(x, threshold=0.99)->int:
 
     return int(degrees_freedom.flat[0])
 
-def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean') -> np.array:
+def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, distance_metric='euclidean') -> np.array:
     """Custom function that assigns unnormalised fuzzy membership 
     values according to the chi2.sf distribution function 
     
@@ -97,7 +97,7 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, metric='euclidean
     dist = cdist(
         x,
         cluster_centers_,
-        metric=metric,
+        metric=distance_metric,
         VI=VI
     )
 
@@ -204,10 +204,10 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             setattr(self, parameter, value)
         return self
 
-    def get_covariance(self, x):
+    def get_covariance(self, X):
         # compute covariance of hardened clusters
         return np.stack(
-                [np.cov(x[self.hard_labels_==i].T) for i in range(self.n_clusters)]
+                [np.cov(X[self.hard_labels_==i].T) for i in range(self.n_clusters)]
             )
     
     def get_weighted_covariance(self, x):
@@ -264,7 +264,7 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         return self
 
-    def predict(self, x, y=None, method='default', degrees_freedom=None):
+    def predict(self, x, y=None, **kwargs):
         '''Prediction of new data in given a trained fuzzy c-means framework [1].
         Parameters
 
@@ -278,8 +278,15 @@ class CmeansModel(BaseEstimator, ClusterMixin):
 
         # check input is OK
         x = check_array(x)
+
+        # if method in kwargs temporarily set it
+        try:
+            method = kwargs.pop('method')
+        except:
+            method = self.predict_method
     
-        if (method == 'default') & (self.predict_method=='default'):
+        # default method of prediction
+        if method=='default':
             return cmeans_predict(
                 x.T, 
                 cntr_trained=self.cluster_centers_,
@@ -290,7 +297,8 @@ class CmeansModel(BaseEstimator, ClusterMixin):
                 seed=self.random_state.randint(2**32)
             )[0]
 
-        elif (method == 'chi2') | (self.predict_method == 'chi2'):
+        # chi2 method of prediction
+        elif method == 'chi2':                
 
             # compute the inverse covariance matrix
             if self.n_features_in_ == 1:
@@ -298,15 +306,14 @@ class CmeansModel(BaseEstimator, ClusterMixin):
             else:
                 vi = np.linalg.inv(self.cov_)
 
-            if degrees_freedom:
-                self.set_params(degrees_freedom=degrees_freedom)
-
+            # pass the remaining kwargs onto chi2_predict()
             return _chi2_predict(
                 x,
                 self.cluster_centers_,
-                vi, 
-                metric=self.distance_metric,
-                degrees_freedom = self.degrees_freedom
+                vi,
+                **kwargs 
+                # metric=self.distance_metric,
+                # degrees_freedom = self.degrees_freedom
             )
 
     def fit_predict(self, x, y=None, **kwargs):
