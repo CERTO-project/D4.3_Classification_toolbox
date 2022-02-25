@@ -26,7 +26,6 @@ decorator==4.4.2
 distro==1.5.0
 fros==1.1
 fsspec==2022.2.0
-fuzzy-water @ file:///users/rsg/anla/code/fuzzy_water/dist/fuzzy-water-0.1.2.tar.gz
 gpg==1.14.0
 h5py==2.10.0
 humanize==0.5.1
