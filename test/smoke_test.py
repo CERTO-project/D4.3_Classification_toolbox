@@ -26,16 +26,7 @@ import os
 # # # # CREATE TEST DATA USING SKIMAGE DATASETS # # # # #
 
 # load a dataset from the tutorial
-## FIXME @anla : somehow this step fails...
-## I think the gitlab runner has no persistence and downloads
-## the file every time. The server from which we download from
-## probably recognises this and says NO. One solution would be
-## to include this data file in the package itself, its not big.
-try:
-    test_ds = xr.tutorial.open_dataset('eraint_uvz', chunks='auto')
-except:
-    print("error downloading the example dataset")
-    exit
+test_ds = xr.open_dataset('./data/eraint_uvz_small.nc', chunks={'longitude':10,'latitude':10})
 
 # write to file
 test_ds.to_netcdf(
