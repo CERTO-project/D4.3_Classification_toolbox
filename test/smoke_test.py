@@ -12,11 +12,7 @@ DESCRIPTION
     3. apply cluster set to datasets
 
 """
-import sys
-sys.path.append("../")
-
 import fuzzy_water_clustering as fwc
-
 import xarray as xr
 
 # import and setup logging
@@ -30,6 +26,11 @@ import os
 # # # # CREATE TEST DATA USING SKIMAGE DATASETS # # # # #
 
 # load a dataset from the tutorial
+## FIXME @anla : somehow this step fails...
+## I think the gitlab runner has no persistence and downloads
+## the file every time. The server from which we download from
+## probably recognises this and says NO. One solution would be
+## to include this data file in the package itself, its not big.
 try:
     test_ds = xr.tutorial.open_dataset('eraint_uvz', chunks='auto')
 except:

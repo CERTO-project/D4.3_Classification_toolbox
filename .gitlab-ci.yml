@@ -51,7 +51,7 @@ build-job:       # This job runs in the build stage, which runs first.
     - python setup.py sdist
     - ls 
     - echo "installing from sdist"
-    - python -m pip install ./dist/*
+    - python -m pip install ./dist/* # FIXME @anla: does this work?
 
 
 estimator-test-job:   # This job runs in the test stage.
@@ -64,6 +64,8 @@ estimator-test-job:   # This job runs in the test stage.
 smoke-test-job:   # This job also runs in the test stage.
   stage: test    # It can run at the same time as unit-test-job (in parallel).
   script:
+    - python setup.py sdist
+    - python -m pip install ./dist/*
     - echo "Smoke test whole package..."
     - python test/smoke_test.py
 
