@@ -30,23 +30,23 @@ test_ds = xr.open_dataset('./test/data/eraint_uvz_small.nc', chunks={'longitude'
 
 # write to file
 test_ds.to_netcdf(
-    'tutorial.eraint_uvz.nc',
+    './test/data/tutorial.eraint_uvz.nc',
     encoding={x:{'zlib':True,'complevel':4} for x in test_ds.data_vars}
 )
 
 # sample file
-training_data = fwc.sample_file('tutorial.eraint_uvz.nc', step_size=2, variables='none')
+training_data = fwc.sample_file('./test/data/tutorial.eraint_uvz.nc', step_size=2, variables='none')
 
 # create CmeansModel instance and fit
 cmeans = fwc.CmeansModel(n_clusters=3,m=1.5)
 cmeans.fit(training_data)
 
 # apply model to file using predict_file
-ds_classified = fwc.predict_file('tutorial.eraint_uvz.nc', cmeans, variables='all', store_model=False)
+ds_classified = fwc.predict_file('./test/data/tutorial.eraint_uvz.nc', cmeans, variables='all', store_model=False)
 
 # write to file
 ds_classified.to_netcdf(
-    "clustered_eraint_uvz.nc",
+    "./test/data/clustered_eraint_uvz.nc",
     encoding={x:{'zlib':True,'complevel':4} for x in ds_classified.data_vars}
 )
 
