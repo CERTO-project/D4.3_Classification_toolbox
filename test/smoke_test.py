@@ -26,7 +26,7 @@ import os
 # # # # CREATE TEST DATA USING SKIMAGE DATASETS # # # # #
 
 # load a dataset from the tutorial
-test_ds = xr.open_dataset('./data/eraint_uvz_small.nc', chunks={'longitude':10,'latitude':10})
+test_ds = xr.open_dataset('./test/data/eraint_uvz_small.nc', chunks={'longitude':10,'latitude':10})
 
 # write to file
 test_ds.to_netcdf(
