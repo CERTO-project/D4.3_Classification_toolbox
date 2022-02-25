@@ -51,8 +51,8 @@ build-job:       # This job runs in the build stage, which runs first.
     - python setup.py sdist
     - ls 
     - echo "installing from sdist"
-    - python -m pip install ./dist/*
-
+    - python -m pip install ./dist/* # FIXME @anla: does this work?
+    - pip freeze
 
 estimator-test-job:   # This job runs in the test stage.
   stage: test    # It only starts when the job in the build stage completes successfully.

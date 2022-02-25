@@ -14,6 +14,23 @@ import sklearn
 from sklearn.metrics import pairwise_distances, make_scorer
 from sklearn.metrics.cluster import calinski_harabasz_score, davies_bouldin_score, silhouette_samples, silhouette_score
 import numpy as np
+from sklearn.utils.validation import check_array
+
+def diff_to_default(estimator, x, y=None):
+    """scoring function for fuzzy clustering
+    
+    returns:
+     negative square root of the mean of the 
+     squared difference between default and chi2 predictions
+    
+    Higher value is better, scores useful to choose 
+    the degrees_freedom parameter for the chi2 method"""
+
+    return -np.sqrt(
+            np.mean((
+                estimator.predict(x, method='default') - estimator.predict(x, method='chi2')
+            )**2)
+        )
 
 def xie_beni(Estimator, X, y=None):
     """ Xie-Beni scoring function
