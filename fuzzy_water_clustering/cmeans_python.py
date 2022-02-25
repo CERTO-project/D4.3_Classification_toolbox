@@ -91,14 +91,24 @@ def _chi2_predict(x, cluster_centers_, VI, degrees_freedom=-1, distance_metric='
     # create an array of zeros to fill with memberships
     # shaped as x, but n_features is replaced with n_classes    
     memberships=np.zeros(x.shape[:-1]+(n_classes,))
+
+    # setup kwargs
+    if distance_metric == 'mahalanobis':
+        kwargs = {
+            'metric':distance_metric,
+            'VI':VI,
+        }
+    elif distance_metric == 'euclidean':
+        kwargs = {
+            'metric':distance_metric
+        }
     
     # for each class calc distance
-    # FIXME @anla : incompatible arguments
+    # FIXME @anla : incompatible arguments, including VI breaks cdist euclidean
     dist = cdist(
         x,
         cluster_centers_,
-        metric=distance_metric,
-        VI=VI
+        **kwargs
     )
 
     # calculate the membership
