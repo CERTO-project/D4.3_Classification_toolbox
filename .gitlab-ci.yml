@@ -78,6 +78,7 @@ publish-job:      # This job runs in the deploy stage.
   rules: # only publish new package on merge on master (default) branch
     - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
       when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
   script:
     - pip install twine
