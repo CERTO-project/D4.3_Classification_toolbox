@@ -7,6 +7,8 @@ An EOSA seminar discussing the science of segmenting the ocean using clustering 
 
 https://rsg.pml.ac.uk/shared_files/brj/EOSA_Seminar/20210520_Laurenson/zoom_0.mp4
 
+_note: some of the syntax in this video is depricated, but the architecture remains the same_
+
 ## __Specification__: _Solution_
 
 * __Easy to use__: _Scikit-learn syntax_ and available to users as a package through _pip install_
@@ -25,7 +27,7 @@ cmeans.fit(X, **kwargs)
 Y = cmeans.predict(X)
 
 # access attributes, eg. cluster centers
-cmeans.cntr_
+cmeans.cluster_centers_
 ```
 
 * __Self consistent repo__: _conda environment `.yml` file_
