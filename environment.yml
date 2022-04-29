@@ -1,0 +1,30 @@
+name: certo
+channels:
+  - jmcmurray
+  - conda-forge
+  - defaults
+dependencies:
+  - xarray
+  - pandas
+  - numpy
+  - holoviews
+  - hvplot
+  - cartopy
+  - matplotlib
+  - colorcet
+  - rasterio
+  - shapely
+  - geopandas
+  - geocube
+  - json
+  - scikit-learn
+  - joblib
+  - gdal
+  - jinja2==2.11.3
+  - jupyterlab
+  - scikit-image
+  - statsmodels
+  - pip
+  - pip:
+    - pysptools==0.15.0
+    - unidip==0.1.1
